@@ -7,6 +7,7 @@ use App\Models\Report;
 use App\Models\Item;
 use App\Models\Location;
 use App\Models\User;
+use App\Http\Controllers\WhatsappController;
 
 class ReportController extends Controller
 {
@@ -24,21 +25,39 @@ class ReportController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'reporter_name' => 'required|string|max:255',
-            'contact' => 'required|string|max:255',
-            'item_id' => 'required|exists:items,id',
-            'location_id' => 'required|exists:locations,id',
-            'description' => 'required|string',
-        ]);
+{
+    $validated = $request->validate([
+        'reporter_name' => 'required|string|max:255',
+        'contact' => 'required|string|max:255',
+        'item_id' => 'required|exists:items,id',
+        'location_id' => 'required|exists:locations,id',
+        'description' => 'required|string',
+    ]);
 
-        $validated['status'] = 'waiting';
+    $validated['status'] = 'waiting';
 
-        Report::create($validated);
+    $report = Report::create($validated);
 
-        return redirect()->route('report.index')->with('success', 'Laporan berhasil dibuat.');
+    // Ambil nama lokasi
+    $location = Location::find($validated['location_id'])->name ?? '-';
+
+    // Kirim ke semua IT Support
+    $wa = new WhatsappController();
+
+    $itSupports = User::where('role', 'it_supp')->get();
+    foreach ($itSupports as $it) {
+        $wa->sendToItSupport(
+            $it->contact, // nomor WA
+            $it->name ?? 'Tim IT Support',
+            $location,
+            $validated['reporter_name'],
+            $validated['description'],
+            route('report.show', $report->id)
+        );
     }
+
+    return redirect()->route('report.index')->with('success', 'Laporan berhasil dibuat dan dikirim ke IT Support.');
+}
 
     public function show($id)
     {
@@ -73,5 +92,7 @@ class ReportController extends Controller
 
     return back()->with('success', 'Tanggal surat jalan berhasil disimpan.');
 }
+
+
 
 }

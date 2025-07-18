@@ -6,6 +6,9 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ReportPublicController;
 use App\Http\Controllers\ITSupportController;
+use App\Http\Controllers\ReportDetailController;
+
+
 
 // =======================
 // ✅ PUBLIC
@@ -53,6 +56,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/report/{id}/accept', [ITSupportController::class, 'accept'])->name('report.accept');
         Route::get('/report/{id}/surat', [ITSupportController::class, 'generateSuratTugas'])->name('report.surat');
         Route::post('/report/{id}/pindah-divisi', [ITSupportController::class, 'pindahDivisi'])->name('report.pindahDivisi');
+        Route::get('/report/{id}/detail', [ReportController::class, 'detail'])->name('report.detail');
+        Route::get('/report-detail/{id}/edit', [ReportDetailController::class, 'edit'])->name('report_detail.edit');
+        Route::put('/report-detail/{id}', [ReportDetailController::class, 'update'])->name('report_detail.update');
+
+
     });
 
     // ✅ LAPORAN UMUM (ADMIN & IT Support)

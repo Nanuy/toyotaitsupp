@@ -119,7 +119,9 @@
                     <strong>Item:</strong> {{ $detail->item->name ?? '-' }}<br>
                     <strong>Masalah:</strong> {{ $detail->uraian_masalah }}<br>
                     <strong>Tindakan:</strong> {{ $detail->tindakan }}
-                    <a href="{{ route('report.detail.edit', $detail->id) }}" class="btn btn-sm btn-outline-primary mt-2">Edit</a>
+                    <a href="{{ route('report_detail.edit', $detail->id) }}" class="btn btn-sm btn-warning">Edit</a>
+
+
 
 
                 </li>
