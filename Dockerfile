@@ -26,5 +26,5 @@ RUN php artisan key:generate
 # Expose port
 EXPOSE 8000
 
-# Start Laravel with PHP's built-in server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+CMD php artisan serve --host=0.0.0.0 --port=${PORT}
+
