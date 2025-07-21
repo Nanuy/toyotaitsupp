@@ -40,7 +40,9 @@
 <body>
 
     <h2>SURAT PERINTAH TUGAS</h2>
-    <p>No : {{ sprintf('%02d/IT/SJM/%s/%s', $report->id, strtoupper(date('m', strtotime($report->surat_jalan_date))), date('Y', strtotime($report->created_at))) }}</p>
+    <p style="text-align: center;">
+    No : {{ sprintf('%02d/IT/SJM/%s/%s', $report->id, strtoupper(date('m', strtotime($report->surat_jalan_date))), date('Y', strtotime($report->created_at))) }}
+</p>
 
     <p>Dengan surat ini diperintahkan kepada petugas-petugas berikut ini:</p>
 
@@ -66,64 +68,79 @@
     <p class="mt-3">Untuk menjalankan tugas kunjungan ke kantor / cabang pada :</p>
 
     <table class="no-border">
-        <tr>
-            <td width="200px">Hari / Tanggal</td>
-            <td>: {{ \Carbon\Carbon::parse($report->created_at)->translatedFormat('l, d F Y') }}</td>
-        </tr>
-        
-        <tr>
-            <td>Lokasi / Cabang</td>
-            <td>: {{ $report->location->name ?? '-' }}</td>
-        </tr>
-        <tr>
-            <td>Maksud dan Tujuan</td>
-            <td>: {{ $report->description }}</td>
-        </tr>
-    </table>
 
-    <p class="text-right mt-3">Depok, {{ $tanggalSurat }}</p>
+    <tr>
+        <td width="200px">Hari Pelaporan</td>
+        <td>: {{ \Carbon\Carbon::parse($report->created_at)->translatedFormat('l, d F Y') }}</td>
+    </tr>
+
+    <tr>
+        <td>Nama Pelapor</td>
+        <td>: {{ $report->reporter_name }}</td>
+    </tr>
+
+    <tr>
+        <td>Cabang</td>
+        <td>: {{ $report->location->name ?? '-' }}</td>
+    </tr>
+
+    <tr>
+        <td>Divisi</td>
+        <td>: {{ $report->division }}</td>
+    </tr>
+    
+    <tr>
+        <td>Kontak</td>
+        <td>: {{ $report->contact }}</td>
+    </tr>
+ 
+    <tr>
+        <td>Maksud dan Tujuan</td>
+        <td>: {{ $report->description }}</td>
+    </tr>
+
+</table>
+
+    <p class="mt-3 mb-0">
+        Depok, {{ $tanggalSurat }}
+    <br><br><br><br>
+     <br>
+    <strong>Andrie Sondakh</strong><br>
+       IT Manager
+</p>
 
 
-    <p class="mt-3">
-        <strong>Andrie Sondakh</strong><br>
-        IT Manager
-    </p>
-
-    <h4 class="mt-3">Detail Tugas:</h4>
+    <h4 class="mt-2">Detail Tugas:</h4>
     <table>
         <thead>
-            <tr>
-                <th>No</th>
-                <th>Uraian Masalah / Kegiatan</th>
-                <th>Tindakan / Saran Teknis</th>
-                <th>Paraf Petugas</th>
-                <th>Paraf Pengguna</th>
-                <th>Paraf Dept Head</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($report->details as $index => $detail)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $detail->uraian_masalah }}</td>
-                    <td>{{ $detail->tindakan }}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="text-center">Belum ada detail tindakan.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-
-    <p class="mt-3">
-        <strong>Catatan:</strong><br>
-        Pada setiap kolom paraf PIC di tabel di atas menunjukkan tahapan validasi progress kegiatan / permasalahan yang ditangani di lokasi.
-        Pastikan setiap PIC memahami dengan jelas kegiatan penanganan petugas IT telah sesuai dengan kebutuhan / ekspektasi yang diharapkan sebelum membubuhkan tanda tangan.
-    </p>
-
+    <tr>
+        <th>No</th>
+        <th>Uraian Masalah / Kegiatan</th>
+        <th>Tindakan / Saran Teknis</th>
+        @foreach ($report->itSupports as $it)
+            <th>Paraf {{ $it->name }}</th>
+        @endforeach
+        <th>Paraf Pengguna</th>
+        <th>Paraf Dept Head</th>
+    </tr>
+</thead>
+<tbody>
+    @forelse ($report->details as $index => $detail)
+        <tr>
+            <td>{{ $index + 1 }}</td>
+            <td>{{ $detail->uraian_masalah }}</td>
+            <td>{{ $detail->tindakan }}</td>
+            @foreach ($report->itSupports as $it)
+                <td></td>
+            @endforeach
+            <td></td>
+            <td></td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="{{ 4 + count($report->itSupports) }}" class="text-center">Belum ada detail tindakan.</td>
+        </tr>
+    @endforelse
+</tbody>
 </body>
 </html>

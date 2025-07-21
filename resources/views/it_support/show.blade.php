@@ -56,11 +56,14 @@
                         <select name="item_id" class="form-control select2" required>
                             <option value="">-- Pilih Item --</option>
                             @foreach ($items as $item)
-                                <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                @php
+                                    $count = $itemCounts[$item->id] ?? 0;
+                                    $label = $item->name . ($count > 0 ? " ({$count}x laporan)" : '');
+                                @endphp
+                                <option value="{{ $item->id }}">{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
-
                     <div class="form-group mt-2">
                         <label for="uraian_masalah">Uraian Masalah:</label>
                         <textarea name="uraian_masalah" class="form-control" rows="3" required></textarea>
@@ -119,7 +122,16 @@
                     <strong>Item:</strong> {{ $detail->item->name ?? '-' }}<br>
                     <strong>Masalah:</strong> {{ $detail->uraian_masalah }}<br>
                     <strong>Tindakan:</strong> {{ $detail->tindakan }}
-                    <a href="{{ route('report_detail.edit', $detail->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                    <div class="mt-2">
+    <a href="{{ route('report_detail.edit', $detail->id) }}" class="btn btn-sm btn-warning">Edit</a>
+
+    <form action="{{ route('report_detail.destroy', $detail->id) }}" method="POST" style="display:inline-block;" 
+          onsubmit="return confirm('Yakin ingin menghapus detail ini?')">
+        @csrf
+        @method('DELETE')
+        <button class="btn btn-sm btn-danger">Hapus</button>
+    </form>
+</div>
 
 
 

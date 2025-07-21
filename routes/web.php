@@ -7,6 +7,10 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ReportPublicController;
 use App\Http\Controllers\ITSupportController;
 use App\Http\Controllers\ReportDetailController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ChartController;
+
+
 
 
 
@@ -59,7 +63,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/report/{id}/detail', [ReportController::class, 'detail'])->name('report.detail');
         Route::get('/report-detail/{id}/edit', [ReportDetailController::class, 'edit'])->name('report_detail.edit');
         Route::put('/report-detail/{id}', [ReportDetailController::class, 'update'])->name('report_detail.update');
-
+        Route::delete('/report/detail/{id}', [ReportDetailController::class, 'destroy'])->name('report_detail.destroy');
 
     });
 
@@ -79,9 +83,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{id}/surat', [ITSupportController::class, 'generateSuratTugas'])->name('surat');
         Route::get('/detail/{detail_id}/edit', [ITSupportController::class, 'editDetail'])->name('detail.edit');
         Route::post('/detail/{detail_id}/update', [ITSupportController::class, 'updateDetail'])->name('detail.update');
-    });
+        
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/chart/perangkat',  [ChartController::class, 'perangkat'])->name('chart.perangkat');
+    Route::get('/chart/it-support', [ChartController::class, 'itSupport'])->name('chart.itsupport');
+    Route::get('/chart/bulanan',    [ChartController::class, 'perBulan'])->name('chart.bulanan');
+    Route::get('/chart/triwulan',   [ChartController::class, 'perTriwulan'])->name('chart.triwulan');
+    Route::get('/chart/cabang',     [ChartController::class, 'cabang'])->name('chart.cabang');
+});
+
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 });
+
+
 
 // =======================
 // ✅ DEBUG & TES

@@ -32,4 +32,14 @@ class ReportDetailController extends Controller
 
     return redirect()->route('report.show', $detail->report_id)->with('success', 'Detail laporan berhasil diperbarui.');
 }
+
+public function destroy($id)
+    {
+        $detail = ReportDetail::findOrFail($id);
+        $reportId = $detail->report_id;
+        $detail->delete();
+
+        return redirect()->route('report.show', $reportId)->with('success', 'Detail tindakan berhasil dihapus.');
+    }
+
 }
