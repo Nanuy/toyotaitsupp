@@ -14,10 +14,13 @@ WORKDIR /var/www
 # Copy project files
 COPY . .
 
+# ✅ Tambahkan baris ini
+RUN cp .env.example .env
+
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Generate Laravel key
+# ✅ Baru generate key sekarang
 RUN php artisan key:generate
 
 # Expose port
