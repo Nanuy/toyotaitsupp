@@ -19,7 +19,7 @@ use App\Http\Controllers\ChartController;
 // =======================
 
 // Halaman awal
-Route::get('/', fn () => view('welcome'))->name('welcome.view');
+Route::get('/laravel', fn () => view('welcome'))->name('welcome.view');
 
 // Halaman uji layout
 Route::get('/master', fn () => view('master'))->name('master.view');
@@ -32,7 +32,7 @@ Route::post('/register', [RegisterController::class, 'register']);
 // Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Form Lapor Tanpa Login
-Route::get('/lapor', [ReportPublicController::class, 'create'])->name('lapor.create');
+Route::get('/', [ReportPublicController::class, 'create'])->name('lapor.create');
 Route::post('/lapor', [ReportPublicController::class, 'store'])->name('lapor.store');
 Route::get('/lapor/{id}', [ReportPublicController::class, 'show'])->name('lapor.show');
 

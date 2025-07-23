@@ -13,7 +13,7 @@ class Report extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+   protected $fillable = [
     'reporter_name',
     'division',
     'contact',
@@ -21,8 +21,10 @@ class Report extends Model
     'location_id',
     'description',
     'status',
-    'surat_jalan_date', 
+    'surat_jalan_date',
+    'image',
 ];
+
 
 protected $casts = [
     'created_at' => 'datetime',

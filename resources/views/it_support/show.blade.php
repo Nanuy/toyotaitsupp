@@ -28,6 +28,16 @@
                     <span class="badge bg-secondary">Completed</span>
                 @endif
             </p>
+                @if ($report->image)
+                    <div class="mb-3">
+                        <p><strong>Gambar Laporan:</strong></p>
+                        <a href="{{ asset('storage/reports/' . $report->image) }}" target="_blank">
+                            <img src="{{ asset('storage/reports/' . $report->image) }}"
+                                alt="Gambar Laporan"
+                                style="max-width: 100%; max-height: 400px; border: 1px solid #ccc;">
+                        </a>
+                    </div>
+                @endif
 
             {{-- Tombol Accept --}}
             @if ($report->status === 'waiting')

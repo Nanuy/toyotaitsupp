@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'css' => App\Http\Middleware\css::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

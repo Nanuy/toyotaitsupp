@@ -10,7 +10,8 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <form method="POST" action="{{ route('lapor.store') }}">
+    <form method="POST" action="{{ route('lapor.store') }}" enctype="multipart/form-data">
+
         @csrf
 
         <div class="mb-3">
@@ -43,6 +44,11 @@
             <label for="description" class="form-label">Deskripsi Masalah (oleh pelapor)</label>
             <textarea name="description" rows="4" class="form-control" required placeholder="Mouse Rusak"></textarea>
         </div>
+
+        <div class="mb-3">
+        <label for="image">Upload Gambar (Opsional)</label>
+        <input type="file" name="image" id="image" class="form-control" accept="image/*">
+    </div>
 
         <button type="submit" class="btn btn-primary">Kirim Laporan</button>
     </form>
