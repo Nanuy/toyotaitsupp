@@ -52,6 +52,13 @@
         </li>
 
         <li class="nav-item">
+            <a class="nav-link" href="{{ route('chart.itsupport') }}">
+                <i class="fas fa-chart-bar"></i>
+                <span>Chart Analisis</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
             <a class="nav-link" href="{{ route('profile.edit') }}">
                 <i class="fas fa-user-edit"></i>
                 <span>Edit Profil</span>
@@ -129,10 +136,10 @@
             <div class="modal-body">Pilih "Logout" di bawah jika Anda siap untuk mengakhiri sesi Anda saat ini.</div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" data-dismiss="modal">Batal</button>
-                <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                <!-- <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button type="submit" class="btn btn-primary">Logout</button>
-                </form>
+                </form> -->
             </div>
         </div>
     </div>

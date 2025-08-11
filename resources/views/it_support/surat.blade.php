@@ -46,22 +46,46 @@
     </style>
 </head>
 <body>
+    @php
+    $bulan = date('m', strtotime($report->surat_jalan_date));
+    $tahun = date('Y', strtotime($report->surat_jalan_date));
+
+    $monthlyCount = \App\Models\Report::whereMonth('surat_jalan_date', $bulan)
+        ->whereYear('surat_jalan_date', $tahun)
+        ->where('surat_jalan_date', '<=', $report->surat_jalan_date)
+        ->orderBy('surat_jalan_date')
+        ->pluck('id');
+
+    // Cari urutan report ini di antara laporan bulan itu
+    $currentIndex = $monthlyCount->search($report->id) + 1;
+@endphp
 
     <h2>SURAT PERINTAH TUGAS</h2>
     <p class="text-center">
-        No : {{ sprintf('%02d/IT/SJM/%s/%s', $report->id, strtoupper(date('m', strtotime($report->surat_jalan_date))), date('Y', strtotime($report->created_at))) }}
-    </p>
+    No : {{ sprintf('%03d/IT/SJM/%s/%s', $currentIndex, $bulan, $tahun) }}
+</p>
 
     <p>Dengan surat ini diperintahkan kepada petugas-petugas berikut ini:</p>
 
     @php
         $names = $report->itSupports->pluck('name')->toArray();
-        $positions = array_fill(0, count($names), 'IT Staff');
     @endphp
 
-    <p><strong>Nama:</strong> {{ implode(', ', $names) }}</p>
-    <p><strong>Jabatan:</strong> {{ implode(', ', $positions) }}</p>
-    <p><strong>Divisi: </strong>IT</p>
+    <table class="no-border">
+        <tr>
+            <td style="width: 200px;">Nama</td>
+            <td>:{{ implode(', ', $names) }}</td>
+        </tr>
+        <tr>
+            <td>Jabatan</td>
+            <td>:IT Staff</td>
+        </tr>
+        <tr>
+            <td>Divisi</td>
+            <td>:IT</td>
+        </tr>
+
+    </table>
 
     <p class="mt-3">Untuk menjalankan tugas kunjungan ke kantor / cabang yang dilakukan pada tanggal:</p>
 
@@ -92,46 +116,114 @@
         </tr>
     </table>
 
-    <p class="mt-3 mb-0">
-        Depok, {{ $tanggalSurat }}
-        <br><br><br><br><br>
-        <strong>Andrie Sondakh</strong><br>
-        IT Manager
-    </p>
+    @php
+    $managerSignature = $report->SignatureByRole('manager'); // atau 'it_manager', tergantung role-nya
+@endphp
+
+<p class="mt-3 mb-0">
+    Depok, {{ $tanggalSurat }}<br><br>
+
+    @if ($managerSignature && file_exists(public_path('storage/' . $managerSignature->signature_path)))
+        <img src="{{ public_path('storage/' . $managerSignature->signature_path) }}" style="height: 50px;"><br>
+    @else
+        <br><br> {{-- Jika tidak ada tanda tangan, beri spasi kosong --}}
+    @endif
+
+    <strong>Andrie Sondakh</strong><br>
+    IT Manager
+</p>
+
 
     <h4 class="mt-2">Detail Tugas:</h4>
-    <table>
-        <thead>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Uraian Masalah / Kegiatan</th>
+            <th>Tindakan / Saran Teknis</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse ($report->details as $index => $detail)
             <tr>
-                <th>No</th>
-                <th>Uraian Masalah / Kegiatan</th>
-                <th>Tindakan / Saran Teknis</th>
-                @foreach ($report->itSupports as $it)
-                    <th>Paraf {{ $it->name }}</th>
-                @endforeach
-                <th>Paraf Pengguna</th>
-                <th>Paraf Dept Head</th>
+                <td>{{ $index + 1 }}</td>
+                <td>{{ $detail->uraian_masalah }}</td>
+                <td>{{ $detail->tindakan }}</td>
             </tr>
+        @empty
+            <tr>
+                <td colspan="{{ 4 + count($report->itSupports) }}" class="text-center">Belum ada detail tindakan.</td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
+<p><br><br><br><br><br><br></p>
+<div style="page-break-before: always;">
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+        <thead>
+            @foreach ($report->itSupports as $it)
+                <th>Paraf {{ $it->name }}</th>
+            @endforeach
+            <th>Paraf Pengguna</th>
+            <th>Paraf Dept Head</th>
+            <th>Paraf Super Admin</th>
         </thead>
         <tbody>
-            @forelse ($report->details as $index => $detail)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $detail->uraian_masalah }}</td>
-                    <td>{{ $detail->tindakan }}</td>
-                    @foreach ($report->itSupports as $it)
-                        <td></td>
-                    @endforeach
-                    <td></td>
-                    <td></td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="{{ 4 + count($report->itSupports) }}" class="text-center">Belum ada detail tindakan.</td>
-                </tr>
-            @endforelse
+            {{-- TTD IT SUPPORT --}}
+            @foreach ($report->itSupports as $it)
+                @php
+                    $ttd = $report->signatures->firstWhere('user_id', $it->id);
+                @endphp
+                <td>
+                    @if ($ttd && $ttd->signature_path)
+                        <img src="{{ public_path('storage/' . $ttd->signature_path) }}" style="height: 50px;">
+                    @else
+                        <em>—</em>
+                    @endif
+                </td>
+            @endforeach
+
+            {{-- TTD PENGGUNA --}}
+            @php
+                $ttdReporter = $report->signatureByRole('user');
+            @endphp
+            <td>
+                @if ($ttdReporter && $ttdReporter->signature_path)
+                    <img src="{{ public_path('storage/' . $ttdReporter->signature_path) }}" style="height: 50px;">
+                @else
+                    <em>—</em>
+                @endif
+            </td>
+
+            {{-- TTD DEPT HEAD --}}
+            @php
+                $ttdDept = $report->signatures->firstWhere('role', 'dept_head');
+            @endphp
+            <td>
+                @if ($ttdDept && $ttdDept->signature_path)
+                    <img src="{{ public_path('storage/' . $ttdDept->signature_path) }}" style="height: 50px;">
+                @else
+                    <em>—</em>
+                @endif
+            </td>
+            
+            {{-- TTD SUPER ADMIN --}}
+            @php
+                $ttdSuperadmin = $report->signatures->firstWhere('role', 'superadmin');
+            @endphp
+            <td>
+                @if ($ttdSuperadmin && $ttdSuperadmin->signature_path)
+                    <img src="{{ public_path('storage/' . $ttdSuperadmin->signature_path) }}" style="height: 50px;">
+                @else
+                    <em>—</em>
+                @endif
+            </td>
         </tbody>
     </table>
+</div>
+
+
+
 
 </body>
 </html>

@@ -18,17 +18,36 @@ class DashboardController extends Controller
         ->limit(10)
         ->get();
 
-    /** 2. IT‑Support teraktif (solo / tim) */
+    /** 2. IT‑Support teraktif (solo / tim) dengan detail individual */
     $teamCounts = DB::table('report_user')
         ->join('users', 'users.id', '=', 'report_user.user_id')
         ->select('report_user.report_id', 'users.name')
         ->get()
-        ->groupBy('report_id')                 // ✅ pakai report_id, bukan id
+        ->groupBy('report_id')
         ->map(fn($rows) =>
             $rows->pluck('name')->sort()->implode(' & ')
         )
         ->countBy()
         ->sortDesc();
+
+    // Individual IT Support counts
+    $individualCounts = DB::table('report_user')
+        ->join('users', 'users.id', '=', 'report_user.user_id')
+        ->where('users.role', 'it_supp')
+        ->select('users.name', DB::raw('COUNT(*) as total'))
+        ->groupBy('users.name')
+        ->orderByDesc('total')
+        ->get()
+        ->pluck('total', 'name');
+
+    // Combined team work (reports with multiple IT support)
+    $combinedWork = DB::table('report_user')
+        ->join('users', 'users.id', '=', 'report_user.user_id')
+        ->select('report_user.report_id')
+        ->groupBy('report_user.report_id')
+        ->havingRaw('COUNT(*) > 1')
+        ->get()
+        ->count();
 
     /** 3. Laporan per bulan (rolling 12) */
     $monthStats = Report::selectRaw('DATE_FORMAT(created_at,"%Y-%m") ym, COUNT(*) total')
@@ -73,6 +92,42 @@ class DashboardController extends Controller
     ]);
 }
 
+    /**
+     * Menampilkan tracking jumlah laporan per nomor telepon
+     */
+    public function phoneTracking()
+    {
+        $phoneStats = Report::select('contact', 'reporter_name')
+            ->selectRaw('COUNT(*) as total_reports')
+            ->selectRaw('MAX(created_at) as last_report_date')
+            ->groupBy('contact', 'reporter_name')
+            ->having('total_reports', '>', 1)
+            ->orderBy('total_reports', 'desc')
+            ->get();
+
+        return view('dashboard.phone-tracking', compact('phoneStats'));
+    }
+
+    /**
+     * Menampilkan detail laporan dari nomor telepon tertentu
+     */
+    public function phoneDetail($phone)
+    {
+        $reports = Report::where('contact', $phone)
+            ->with(['location', 'details.item'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $phoneInfo = [
+            'phone' => $phone,
+            'reporter_name' => $reports->first()->reporter_name ?? 'Unknown',
+            'total_reports' => $reports->count(),
+            'first_report' => $reports->last()->created_at ?? null,
+            'last_report' => $reports->first()->created_at ?? null,
+        ];
+
+        return view('dashboard.phone-detail', compact('reports', 'phoneInfo'));
+    }
 }
 
 ?>

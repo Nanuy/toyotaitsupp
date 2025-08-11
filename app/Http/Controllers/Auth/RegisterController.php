@@ -5,39 +5,89 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
+use Exception;
 
 class RegisterController extends Controller
 {
-    public function showRegistrationForm()
+    /**
+     * Tampilkan form registrasi
+     */
+    public function showRegisterForm()
     {
         return view('auth.register');
     }
 
-    public function register(Request $request)
+    /**
+     * Proses registrasi user baru
+     */
+    public function customRegister(Request $request)
     {
-        $request->validate([
-    'name' => 'required|max:100',
-    'email' => 'required|email|unique:users',
-    'password' => 'required|confirmed|min:6',
-    'role' => 'required|in:superadmin,it_supp',
-    'jabatan' => 'required|string|max:100',
-    'departemen' => 'required|string|max:100',
-]);
+        // Validasi input
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email|max:255',
+            'password' => 'required|confirmed|min:6',
+            'jabatan' => 'required|string|max:255',
+            'departemen' => 'required|string|max:255', 
+            'contact' => 'required|string|max:30',
+            'role' => 'required|in:it_supp,superadmin',
+            'signature' => 'required|image|mimes:png|max:512',
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.unique' => 'Email sudah terdaftar.',
+            'password.required' => 'Password wajib diisi.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'password.min' => 'Password minimal 6 karakter.',
+            'contact.required' => 'Kontak wajib diisi.',
+            'contact.max' => 'Kontak maksimal 30 karakter.',
+            'jabatan.required' => 'Jabatan wajib diisi.',
+            'departemen.required' => 'Departemen wajib diisi.',
+            'role.required' => 'Role wajib dipilih.',
+            'signature.required' => 'File tanda tangan wajib diupload.',
+            'signature.mimes' => 'File harus berformat PNG.',
+            'signature.max' => 'File maksimal 500KB.',
+        ]);
 
-$user = User::create([
-    'name' => $request->name,
-    'email' => $request->email,
-    'password' => Hash::make($request->password),
-    'role' => $request->role,
-    'jabatan' => $request->jabatan,
-    'departemen' => $request->departemen,
-]);
+        try {
+            // Upload file signature
+            $signaturePath = null;
+            if ($request->hasFile('signature') && $request->file('signature')->isValid()) {
+                // Pastikan direktori ada
+                if (!Storage::disk('public')->exists('signatures')) {
+                    Storage::disk('public')->makeDirectory('signatures');
+                }
 
+                $file = $request->file('signature');
+                $fileName = 'signature_' . time() . '_' . uniqid() . '.png';
+                $signaturePath = $file->storeAs('signatures', $fileName, 'public');
+            }
 
-        // Auth::login($user);
+            // Buat user baru
+            User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
+                'jabatan' => $validatedData['jabatan'],
+                'departemen' => $validatedData['departemen'],
+                'contact' => $validatedData['contact'],
+                'role' => $validatedData['role'],
+                'signature_path' => $signaturePath,
+            ]);
 
-        return redirect()->route('login')->with('success', 'Registrasi berhasil. Silakan login.');
+            return redirect()->route('register')->with('success', 'Registrasi berhasil! Silakan login dengan akun Anda.');
+
+        } catch (Exception $e) {
+            // Hapus file jika ada error
+            if (isset($signaturePath) && $signaturePath && Storage::disk('public')->exists($signaturePath)) {
+                Storage::disk('public')->delete($signaturePath);
+            }
+
+            return back()
+                ->withErrors(['error' => 'Terjadi kesalahan saat registrasi. Silakan coba lagi.'])
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
     }
 }

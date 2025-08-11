@@ -1,13 +1,13 @@
-@extends('superadmin')
+@extends('layouts.itsupport')
 
-@section('title', 'Dashboard Superadmin - Analisis Perangkat IT')
+@section('title', 'Dashboard IT Support - Analisis Chart')
 
 @section('content')
 <div class="container-fluid">
     <!-- Header Section -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-chart-line mr-2"></i>Analisis Perangkat IT
+            <i class="fas fa-chart-line mr-2"></i>Analisis Chart IT Support
         </h1>
         <div class="btn-group">
             <button class="btn btn-sm btn-primary shadow-sm" onclick="exportData()">
@@ -184,17 +184,17 @@
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Cabang Aktif
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Laporan Menunggu
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-branches">0</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="waiting-reports">0</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-building fa-2x text-gray-300"></i>
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -207,12 +207,12 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Kategori Item
+                                Laporan Diterima
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="item-categories">0</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="accepted-reports">0</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-tags fa-2x text-gray-300"></i>
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -220,17 +220,17 @@
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card border-left-success shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Rata-rata/Hari
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Laporan Selesai
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avg-per-day">0</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="completed-reports">0</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                            <i class="fas fa-check-double fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -244,14 +244,14 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-map-marker-alt mr-2"></i>Laporan per Cabang
+                        <i class="fas fa-chart-pie mr-2"></i>Distribusi Status Laporan
                     </h6>
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right shadow">
-                            <a class="dropdown-item" href="#" onclick="downloadChart('cabangChart', 'laporan-cabang')">
+                            <a class="dropdown-item" href="#" onclick="downloadChart('statusChart', 'distribusi-status')">
                                 <i class="fas fa-download fa-sm fa-fw mr-2 text-gray-400"></i>
                                 Download Chart
                             </a>
@@ -260,7 +260,7 @@
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
-                        <canvas id="cabangChart"></canvas>
+                        <canvas id="statusChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -270,14 +270,14 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-tags mr-2"></i>Laporan per Kategori
+                        <i class="fas fa-users mr-2"></i>Performa IT Support
                     </h6>
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right shadow">
-                            <a class="dropdown-item" href="#" onclick="downloadChart('kategoriChart', 'laporan-kategori')">
+                            <a class="dropdown-item" href="#" onclick="downloadChart('performanceChart', 'performa-it-support')">
                                 <i class="fas fa-download fa-sm fa-fw mr-2 text-gray-400"></i>
                                 Download Chart
                             </a>
@@ -286,7 +286,7 @@
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
-                        <canvas id="kategoriChart"></canvas>
+                        <canvas id="performanceChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -299,14 +299,14 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-line mr-2"></i>Tren Laporan (Rentang Waktu)
+                        <i class="fas fa-chart-line mr-2"></i>Tren Laporan Bulanan
                     </h6>
                     <div class="dropdown no-arrow">
                         <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right shadow">
-                            <a class="dropdown-item" href="#" onclick="downloadChart('waktuChart', 'tren-waktu')">
+                            <a class="dropdown-item" href="#" onclick="downloadChart('monthlyChart', 'tren-bulanan')">
                                 <i class="fas fa-download fa-sm fa-fw mr-2 text-gray-400"></i>
                                 Download Chart
                             </a>
@@ -315,7 +315,7 @@
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
-                        <canvas id="waktuChart"></canvas>
+                        <canvas id="monthlyChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -335,7 +335,7 @@
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right shadow">
-                            <a class="dropdown-item" href="#" onclick="downloadChart('topItemChart', 'top-items')">
+                            <a class="dropdown-item" href="#" onclick="downloadChart('topItemsChart', 'top-items')">
                                 <i class="fas fa-download fa-sm fa-fw mr-2 text-gray-400"></i>
                                 Download Chart
                             </a>
@@ -344,7 +344,7 @@
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
-                        <canvas id="topItemChart"></canvas>
+                        <canvas id="topItemsChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -415,67 +415,12 @@
             </div>
         </div>
     </div>
-
-    <!-- Comparison Modal -->
-    <div class="modal fade" id="comparisonModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-chart-line mr-2"></i>Perbandingan Periode
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="comparison-form">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Periode 1 (Pembanding)</h6>
-                                <div class="form-group">
-                                    <label>Tanggal Mulai</label>
-                                    <input type="date" class="form-control" id="period1_start">
-                                </div>
-                                <div class="form-group">
-                                    <label>Tanggal Akhir</label>
-                                    <input type="date" class="form-control" id="period1_end">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Periode 2 (Referensi)</h6>
-                                <div class="form-group">
-                                    <label>Tanggal Mulai</label>
-                                    <input type="date" class="form-control" id="period2_start">
-                                </div>
-                                <div class="form-group">
-                                    <label>Tanggal Akhir</label>
-                                    <input type="date" class="form-control" id="period2_end">
-                                </div>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-chart-bar mr-1"></i>Bandingkan
-                        </button>
-                    </form>
-                    <div id="comparison-results" class="mt-4" style="display: none;">
-                        <!-- Comparison results will be shown here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <!-- Floating Action Button -->
 <div class="fab-container">
     <div class="fab-main" onclick="toggleFab()">
         <i class="fas fa-plus" id="fab-icon"></i>
-    </div>
-    <div class="fab-option" onclick="openComparisonModal()" style="display: none;">
-        <i class="fas fa-chart-line"></i>
-        <span class="fab-tooltip">Bandingkan Periode</span>
     </div>
     <div class="fab-option" onclick="refreshAllData()" style="display: none;">
         <i class="fas fa-sync-alt"></i>
@@ -493,10 +438,6 @@
         <i class="fas fa-file-excel"></i>
         <span class="fab-tooltip">Download Excel Data</span>
     </div>
-</div></div>
-        </div>
-    </div>
-
 </div>
 @endsection
 
@@ -578,18 +519,6 @@
     opacity: 1;
 }
 
-/* Table improvements */
-.table th {
-    background-color: #f8f9fc;
-    border-top: none;
-    font-weight: 600;
-    font-size: 0.875rem;
-}
-
-.table-responsive {
-    border-radius: 0.35rem;
-}
-
 /* Loading states */
 .loading-row {
     text-align: center;
@@ -606,13 +535,13 @@
 }
 
 .status-pending { background-color: #fef3cd; color: #856404; }
-.status-in-progress { background-color: #cff4fc; color: #055160; }
+.status-accepted { background-color: #cff4fc; color: #055160; }
 .status-completed { background-color: #d1e7dd; color: #0f5132; }
 .status-cancelled { background-color: #f8d7da; color: #721c24; }
 </style>
 
 <script>
-    let cabangChart, kategoriChart, waktuChart, topItemChart;
+    let statusChart, performanceChart, monthlyChart, topItemsChart;
     let currentData = {};
     let fabOpen = false;
     let currentPage = 1;
@@ -623,7 +552,6 @@
         fetchChartData();
         loadRecentReports();
         loadReportsTable();
-        startRealTimeUpdates();
 
         document.getElementById('filter-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -644,12 +572,6 @@
         document.getElementById('table-per-page').addEventListener('change', function() {
             currentPage = 1;
             loadReportsTable();
-        });
-
-        // Comparison form
-        document.getElementById('comparison-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            loadComparisonData();
         });
     });
 
@@ -700,8 +622,6 @@
         }
         
         fetchChartData();
-        loadRecentReports();
-        loadReportsTable();
     }
 
     function clearFilters() {
@@ -711,8 +631,6 @@
         document.getElementById('chart_type').value = 'bar';
         updateTopItemsTitle();
         fetchChartData();
-        loadReportsTable();
-        loadRecentReports();
     }
 
     function fetchChartData() {
@@ -727,7 +645,7 @@
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        fetch(`/reports/charts?${params.toString()}`, {
+        fetch(`/itsupport/charts?${params.toString()}`, {
             headers: {
                 'X-CSRF-TOKEN': csrfToken,
                 'Content-Type': 'application/json',
@@ -743,10 +661,10 @@
         .then(data => {
             currentData = data;
             updateSummaryCards(data.summary);
-            updateCabangChart(data.cabangData);
-            updateKategoriChart(data.kategoriData);
-            updateWaktuChart(data.waktuData);
-            updateTopItemChart(data.topItemData);
+            updateStatusChart(data.statusData);
+            updatePerformanceChart(data.itSupportPerformanceData);
+            updateMonthlyChart(data.monthlyData);
+            updateTopItemsChart(data.topItemsData);
             showLoading(false);
         })
         .catch(error => {
@@ -757,35 +675,17 @@
     }
 
     function loadRecentReports() {
-        const formData = new FormData(document.getElementById('filter-form'));
-        const params = new URLSearchParams();
-        
-        for (let [key, value] of formData.entries()) {
-            if (value) params.append(key, value);
-        }
-        
-        params.append('limit', '10'); // Limit to 10 recent reports
-
-        fetch(`/reports/widgets?${params.toString()}`, {
+        fetch('/reports/widgets', {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            updateRecentReports(data.recent_reports || []);
+            updateRecentReports(data.recent_reports);
         })
-        .catch(error => {
-            console.error('Error loading recent reports:', error);
-            document.getElementById('recent-reports').innerHTML = 
-                '<p class="text-muted text-center">Error loading recent reports</p>';
-        });
+        .catch(error => console.error('Error loading recent reports:', error));
     }
 
     function updateRecentReports(reports) {
@@ -799,18 +699,342 @@
             <div class="border-bottom pb-2 mb-2">
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
-                        <h6 class="mb-1 font-weight-bold text-sm">${report.location || 'Tidak Ada'}</h6>
-                        <p class="mb-1 text-xs text-muted">${report.item || 'Tidak Ada'}</p>
-                        <small class="text-muted">${report.date || 'Tidak Ada'}</small>
+                        <h6 class="mb-1 font-weight-bold text-sm">${report.location}</h6>
+                        <p class="mb-1 text-xs text-muted">${report.item}</p>
+                        <small class="text-muted">${report.date}</small>
                     </div>
-                    <span class="status-badge status-${(report.status || 'pending').toLowerCase().replace(' ', '-')}">
-                        ${report.status || 'Pending'}
+                    <span class="status-badge status-${report.status.toLowerCase().replace(' ', '-')}">
+                        ${report.status}
                     </span>
                 </div>
             </div>
         `).join('');
         
         container.innerHTML = html;
+    }
+
+    function updateSummaryCards(summary) {
+        if (summary) {
+            document.getElementById('total-reports').textContent = summary.totalReports || 0;
+            document.getElementById('waiting-reports').textContent = summary.waitingReports || 0;
+            document.getElementById('accepted-reports').textContent = summary.acceptedReports || 0;
+            document.getElementById('completed-reports').textContent = summary.completedReports || 0;
+        }
+    }
+
+    function updateStatusChart(data) {
+        if (statusChart) statusChart.destroy();
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        
+        statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    data: data.values,
+                    backgroundColor: ['#f6c23e', '#36b9cc', '#1cc88a', '#e74a3b', '#858796'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updatePerformanceChart(data) {
+        if (performanceChart) performanceChart.destroy();
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        
+        performanceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Jumlah Laporan',
+                    data: data.values,
+                    backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateMonthlyChart(data) {
+        if (monthlyChart) monthlyChart.destroy();
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
+        
+        monthlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: "Jumlah Laporan",
+                    data: data.values,
+                    borderColor: "rgba(78, 115, 223, 1)",
+                    backgroundColor: "rgba(78, 115, 223, 0.1)",
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointBorderColor: "#fff",
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { 
+                            display: true, 
+                            text: 'Bulan',
+                            font: { weight: 'bold' }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: { 
+                            display: true, 
+                            text: 'Jumlah Laporan',
+                            font: { weight: 'bold' }
+                        },
+                        ticks: { precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateTopItemsChart(data) {
+        if (topItemsChart) topItemsChart.destroy();
+        const ctx = document.getElementById('topItemsChart').getContext('2d');
+        
+        topItemsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Jumlah Laporan',
+                    data: data.values,
+                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: { 
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    // FAB Functions
+    function toggleFab() {
+        fabOpen = !fabOpen;
+        const options = document.querySelectorAll('.fab-option');
+        const icon = document.getElementById('fab-icon');
+        
+        options.forEach((option, index) => {
+            if (fabOpen) {
+                option.style.display = 'flex';
+                setTimeout(() => {
+                    option.style.transform = `translateY(-${(index + 1) * 58}px)`;
+                    option.style.opacity = '1';
+                }, index * 50);
+            } else {
+                option.style.transform = 'translateY(0)';
+                option.style.opacity = '0';
+                setTimeout(() => {
+                    option.style.display = 'none';
+                }, 200);
+            }
+        });
+        
+        icon.style.transform = fabOpen ? 'rotate(45deg)' : 'rotate(0deg)';
+    }
+
+    function refreshAllData() {
+        fetchChartData();
+        loadRecentReports();
+        toggleFab();
+        showSuccessMessage('Data berhasil diperbarui');
+    }
+
+    // Utility Functions
+    function downloadChart(chartId, filename) {
+        const canvas = document.getElementById(chartId);
+        if (!canvas) {
+            showErrorMessage('Chart tidak ditemukan');
+            return;
+        }
+
+        const link = document.createElement('a');
+        link.download = `${filename}-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        showSuccessMessage(`Chart ${filename} berhasil didownload`);
+    }
+
+    function downloadAllCharts() {
+        const charts = [
+            { id: 'statusChart', name: 'distribusi-status' },
+            { id: 'performanceChart', name: 'performa-it-support' },
+            { id: 'monthlyChart', name: 'tren-bulanan' },
+            { id: 'topItemsChart', name: 'top-items' }
+        ];
+
+        const zip = new JSZip();
+        const promises = [];
+
+        charts.forEach(chart => {
+            const canvas = document.getElementById(chart.id);
+            if (canvas) {
+                const dataURL = canvas.toDataURL('image/png');
+                const base64Data = dataURL.split(',')[1];
+                zip.file(`${chart.name}-${new Date().toISOString().split('T')[0]}.png`, base64Data, {base64: true});
+            }
+        });
+
+        zip.generateAsync({type: "blob"})
+        .then(function(content) {
+            const link = document.createElement('a');
+            link.download = `itsupport-charts-${new Date().toISOString().split('T')[0]}.zip`;
+            link.href = URL.createObjectURL(content);
+            link.click();
+            showSuccessMessage('Semua chart berhasil didownload dalam ZIP');
+        })
+        .catch(function(error) {
+            showErrorMessage('Gagal membuat ZIP file: ' + error.message);
+        });
+    }
+
+    function downloadChartDataAsExcel() {
+        if (!currentData || Object.keys(currentData).length === 0) {
+            showErrorMessage('Data chart belum dimuat');
+            return;
+        }
+
+        const wb = XLSX.utils.book_new();
+        
+        // Add summary data
+        if (currentData.summary) {
+            const summaryData = [
+                ['Metrik', 'Nilai'],
+                ['Total Laporan', currentData.summary.totalReports || 0],
+                ['Laporan Menunggu', currentData.summary.waitingReports || 0],
+                ['Laporan Diterima', currentData.summary.acceptedReports || 0],
+                ['Laporan Selesai', currentData.summary.completedReports || 0],
+                ['Rata-rata per Hari', (currentData.summary.avgPerDay || 0).toFixed(1)]
+            ];
+            const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, summaryWS, 'Ringkasan');
+        }
+
+        // Add status data
+        if (currentData.statusData) {
+            const statusData = [['Status', 'Jumlah Laporan']];
+            currentData.statusData.labels.forEach((label, index) => {
+                statusData.push([label, currentData.statusData.values[index]]);
+            });
+            const statusWS = XLSX.utils.aoa_to_sheet(statusData);
+            XLSX.utils.book_append_sheet(wb, statusWS, 'Data Status');
+        }
+
+        // Add performance data
+        if (currentData.itSupportPerformanceData) {
+            const performanceData = [['IT Support', 'Jumlah Laporan']];
+            currentData.itSupportPerformanceData.labels.forEach((label, index) => {
+                performanceData.push([label, currentData.itSupportPerformanceData.values[index]]);
+            });
+            const performanceWS = XLSX.utils.aoa_to_sheet(performanceData);
+            XLSX.utils.book_append_sheet(wb, performanceWS, 'Data Performa');
+        }
+
+        // Add monthly data
+        if (currentData.monthlyData) {
+            const monthlyData = [['Bulan', 'Jumlah Laporan']];
+            currentData.monthlyData.labels.forEach((label, index) => {
+                monthlyData.push([label, currentData.monthlyData.values[index]]);
+            });
+            const monthlyWS = XLSX.utils.aoa_to_sheet(monthlyData);
+            XLSX.utils.book_append_sheet(wb, monthlyWS, 'Data Bulanan');
+        }
+
+        // Add top items data
+        if (currentData.topItemsData) {
+            const topItemsData = [['Item', 'Jumlah Laporan']];
+            currentData.topItemsData.labels.forEach((label, index) => {
+                topItemsData.push([label, currentData.topItemsData.values[index]]);
+            });
+            const topItemsWS = XLSX.utils.aoa_to_sheet(topItemsData);
+            XLSX.utils.book_append_sheet(wb, topItemsWS, 'Top Items');
+        }
+
+        // Save the file
+        const filename = `itsupport-chart-data-${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        showSuccessMessage('Data chart berhasil didownload sebagai Excel');
+    }
+
+    function exportData() {
+        const params = new URLSearchParams(new FormData(document.getElementById('filter-form')));
+        window.open(`/itsupport/export?${params.toString()}`, '_blank');
+        toggleFab();
+    }
+
+    function showErrorMessage(message) {
+        alert('Error: ' + message);
+    }
+
+    function showSuccessMessage(message) {
+        console.log('Success: ' + message);
     }
 
     function loadReportsTable() {
@@ -919,426 +1143,6 @@
         loadReportsTable();
     }
 
-    function updateSummaryCards(summary) {
-        if (summary) {
-            document.getElementById('total-reports').textContent = summary.totalReports || 0;
-            document.getElementById('active-branches').textContent = summary.activeBranches || 0;
-            document.getElementById('item-categories').textContent = summary.itemCategories || 0;
-            document.getElementById('avg-per-day').textContent = (summary.avgPerDay || 0).toFixed(1);
-        }
-    }
-
-    function updateCabangChart(data) {
-        if (cabangChart) cabangChart.destroy();
-        const ctx = document.getElementById('cabangChart').getContext('2d');
-        
-        const chartType = document.getElementById('chart_type').value;
-        const type = ['doughnut', 'pie'].includes(chartType) ? chartType : 'bar';
-        
-        cabangChart = new Chart(ctx, {
-            type: type,
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: 'Jumlah Laporan',
-                    data: data.values,
-                    backgroundColor: type === 'bar' ? 'rgba(78, 115, 223, 0.8)' : [
-                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-                        '#858796', '#5a5c69', '#f8f9fc', '#3a3b45', '#2e59d9'
-                    ],
-                    borderColor: type === 'bar' ? 'rgba(78, 115, 223, 1)' : '#fff',
-                    borderWidth: type === 'bar' ? 1 : 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: type !== 'bar',
-                        position: 'bottom'
-                    }
-                },
-                scales: type === 'bar' ? {
-                    y: { 
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
-                } : {}
-            }
-        });
-    }
-
-    function updateKategoriChart(data) {
-        if (kategoriChart) kategoriChart.destroy();
-        const ctx = document.getElementById('kategoriChart').getContext('2d');
-        
-        kategoriChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    data: data.values,
-                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69'],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function updateWaktuChart(data) {
-        if (waktuChart) waktuChart.destroy();
-        const ctx = document.getElementById('waktuChart').getContext('2d');
-        
-        waktuChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: "Jumlah Laporan",
-                    data: data.values,
-                    borderColor: "rgba(78, 115, 223, 1)",
-                    backgroundColor: "rgba(78, 115, 223, 0.1)",
-                    fill: true,
-                    tension: 0.3,
-                    pointBackgroundColor: "rgba(78, 115, 223, 1)",
-                    pointBorderColor: "#fff",
-                    pointBorderWidth: 2,
-                    pointRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { unit: 'day' },
-                        title: { 
-                            display: true, 
-                            text: 'Tanggal',
-                            font: { weight: 'bold' }
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        title: { 
-                            display: true, 
-                            text: 'Jumlah Laporan',
-                            font: { weight: 'bold' }
-                        },
-                        ticks: { precision: 0 }
-                    }
-                }
-            }
-        });
-    }
-
-    function updateTopItemChart(data) {
-        if (topItemChart) topItemChart.destroy();
-        const ctx = document.getElementById('topItemChart').getContext('2d');
-        
-        topItemChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: 'Jumlah Laporan',
-                    data: data.values,
-                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    x: { 
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
-                }
-            }
-        });
-    }
-
-    // FAB Functions
-    function toggleFab() {
-        fabOpen = !fabOpen;
-        const options = document.querySelectorAll('.fab-option');
-        const icon = document.getElementById('fab-icon');
-        
-        options.forEach((option, index) => {
-            if (fabOpen) {
-                option.style.display = 'flex';
-                setTimeout(() => {
-                    option.style.transform = `translateY(-${(index + 1) * 58}px)`;
-                    option.style.opacity = '1';
-                }, index * 50);
-            } else {
-                option.style.transform = 'translateY(0)';
-                option.style.opacity = '0';
-                setTimeout(() => {
-                    option.style.display = 'none';
-                }, 200);
-            }
-        });
-        
-        icon.style.transform = fabOpen ? 'rotate(45deg)' : 'rotate(0deg)';
-    }
-
-    function openComparisonModal() {
-        $('#comparisonModal').modal('show');
-        toggleFab();
-    }
-
-    function loadComparisonData() {
-        const period1Start = document.getElementById('period1_start').value;
-        const period1End = document.getElementById('period1_end').value;
-        const period2Start = document.getElementById('period2_start').value;
-        const period2End = document.getElementById('period2_end').value;
-
-        if (!period1Start || !period1End || !period2Start || !period2End) {
-            showErrorMessage('Harap isi semua tanggal untuk perbandingan');
-            return;
-        }
-
-        fetch('/reports/comparison', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                period1_start: period1Start,
-                period1_end: period1End,
-                period2_start: period2Start,
-                period2_end: period2End
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            updateComparisonResults(data);
-        })
-        .catch(error => {
-            console.error('Error loading comparison:', error);
-            showErrorMessage('Error loading comparison data');
-        });
-    }
-
-    function updateComparisonResults(data) {
-        const container = document.getElementById('comparison-results');
-        const trend = data.comparison.trend;
-        const trendIcon = trend === 'up' ? 'fa-arrow-up text-success' : 
-                         trend === 'down' ? 'fa-arrow-down text-danger' : 
-                         'fa-minus text-warning';
-        
-        const html = `
-            <div class="card">
-                <div class="card-body">
-                    <h5>Hasil Perbandingan</h5>
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <h6>Periode 1</h6>
-                            <h3 class="text-primary">${data.period1.reports}</h3>
-                            <small>${data.period1.start} - ${data.period1.end}</small>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <h6>Perubahan</h6>
-                            <h3><i class="fas ${trendIcon}"></i> ${Math.abs(data.comparison.percentage_change)}%</h3>
-                            <small>${data.comparison.difference > 0 ? '+' : ''}${data.comparison.difference} laporan</small>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <h6>Periode 2</h6>
-                            <h3 class="text-info">${data.period2.reports}</h3>
-                            <small>${data.period2.start} - ${data.period2.end}</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        container.innerHTML = html;
-        container.style.display = 'block';
-    }
-
-    function refreshAllData() {
-        fetchChartData();
-        loadRecentReports();
-        loadReportsTable();
-        toggleFab();
-        showSuccessMessage('Data berhasil diperbarui');
-    }
-
-    function startRealTimeUpdates() {
-        // Update data setiap 5 menit
-        setInterval(() => {
-            loadRecentReports();
-            // Optional: update summary cards
-            const formData = new FormData(document.getElementById('filter-form'));
-            const params = new URLSearchParams();
-            for (let [key, value] of formData.entries()) {
-                if (value) params.append(key, value);
-            }
-            
-            fetch(`/reports/realtime-stats?${params.toString()}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Update real-time indicators if needed
-                })
-                .catch(error => console.error('Real-time update error:', error));
-        }, 300000); // 5 minutes
-    }
-
-    // Utility Functions
-    function downloadChart(chartId, filename) {
-        const canvas = document.getElementById(chartId);
-        if (!canvas) {
-            showErrorMessage('Chart tidak ditemukan');
-            return;
-        }
-
-        const link = document.createElement('a');
-        link.download = `${filename}-${new Date().toISOString().split('T')[0]}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        
-        showSuccessMessage(`Chart ${filename} berhasil didownload`);
-    }
-
-    function downloadAllCharts() {
-        const charts = [
-            { id: 'cabangChart', name: 'laporan-cabang' },
-            { id: 'kategoriChart', name: 'laporan-kategori' },
-            { id: 'waktuChart', name: 'tren-waktu' },
-            { id: 'topItemChart', name: 'top-items' }
-        ];
-
-        const zip = new JSZip();
-
-        charts.forEach(chart => {
-            const canvas = document.getElementById(chart.id);
-            if (canvas) {
-                const dataURL = canvas.toDataURL('image/png');
-                const base64Data = dataURL.split(',')[1];
-                zip.file(`${chart.name}-${new Date().toISOString().split('T')[0]}.png`, base64Data, {base64: true});
-            }
-        });
-
-        zip.generateAsync({type: "blob"})
-        .then(function(content) {
-            const link = document.createElement('a');
-            link.download = `all-charts-${new Date().toISOString().split('T')[0]}.zip`;
-            link.href = URL.createObjectURL(content);
-            link.click();
-            showSuccessMessage('Semua chart berhasil didownload dalam ZIP');
-        })
-        .catch(function(error) {
-            showErrorMessage('Gagal membuat ZIP file: ' + error.message);
-        });
-    }
-
-    function downloadChartDataAsExcel() {
-        if (!currentData || Object.keys(currentData).length === 0) {
-            showErrorMessage('Data chart belum dimuat');
-            return;
-        }
-
-        const wb = XLSX.utils.book_new();
-        
-        // Add summary data
-        if (currentData.summary) {
-            const summaryData = [
-                ['Metrik', 'Nilai'],
-                ['Total Laporan', currentData.summary.totalReports || 0],
-                ['Cabang Aktif', currentData.summary.activeBranches || 0],
-                ['Kategori Item', currentData.summary.itemCategories || 0],
-                ['Rata-rata per Hari', (currentData.summary.avgPerDay || 0).toFixed(1)]
-            ];
-            const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
-            XLSX.utils.book_append_sheet(wb, summaryWS, 'Ringkasan');
-        }
-
-        // Add cabang data
-        if (currentData.cabangData) {
-            const cabangData = [['Cabang', 'Jumlah Laporan']];
-            currentData.cabangData.labels.forEach((label, index) => {
-                cabangData.push([label, currentData.cabangData.values[index]]);
-            });
-            const cabangWS = XLSX.utils.aoa_to_sheet(cabangData);
-            XLSX.utils.book_append_sheet(wb, cabangWS, 'Data Cabang');
-        }
-
-        // Add kategori data
-        if (currentData.kategoriData) {
-            const kategoriData = [['Kategori', 'Jumlah Laporan']];
-            currentData.kategoriData.labels.forEach((label, index) => {
-                kategoriData.push([label, currentData.kategoriData.values[index]]);
-            });
-            const kategoriWS = XLSX.utils.aoa_to_sheet(kategoriData);
-            XLSX.utils.book_append_sheet(wb, kategoriWS, 'Data Kategori');
-        }
-
-        // Add waktu data
-        if (currentData.waktuData) {
-            const waktuData = [['Tanggal', 'Jumlah Laporan']];
-            currentData.waktuData.labels.forEach((label, index) => {
-                waktuData.push([label, currentData.waktuData.values[index]]);
-            });
-            const waktuWS = XLSX.utils.aoa_to_sheet(waktuData);
-            XLSX.utils.book_append_sheet(wb, waktuWS, 'Data Waktu');
-        }
-
-        // Add top items data
-        if (currentData.topItemData) {
-            const topItemData = [['Item', 'Jumlah Laporan']];
-            currentData.topItemData.labels.forEach((label, index) => {
-                topItemData.push([label, currentData.topItemData.values[index]]);
-            });
-            const topItemWS = XLSX.utils.aoa_to_sheet(topItemData);
-            XLSX.utils.book_append_sheet(wb, topItemWS, 'Top Items');
-        }
-
-        // Save the file
-        const filename = `chart-data-${new Date().toISOString().split('T')[0]}.xlsx`;
-        XLSX.writeFile(wb, filename);
-        showSuccessMessage('Data chart berhasil didownload sebagai Excel');
-    }
-
-    function exportData() {
-        const params = new URLSearchParams(new FormData(document.getElementById('filter-form')));
-        window.open(`/reports/export?${params.toString()}`, '_blank');
-        toggleFab();
-    }
-
     function debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -1350,13 +1154,5 @@
             timeout = setTimeout(later, wait);
         };
     }
-
-    function showErrorMessage(message) {
-        alert('Error: ' + message);
-    }
-
-    function showSuccessMessage(message) {
-        console.log('Success: ' + message);
-    }
 </script>
-@endpush
+@endpush 

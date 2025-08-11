@@ -68,8 +68,8 @@ class ReportController extends Controller
 
     public function show($id)
 {
-    $report = Report::with(['location', 'details.item', 'itSupports'])
-             ->findOrFail($id);
+    $report = Report::with(['location', 'details.item', 'itSupports', 'signatures'])
+                    ->findOrFail($id);
 
     // --- Hitung total laporan per item untuk pelapor & kontak yang sama
     $itemCounts = DB::table('report_details')
@@ -136,9 +136,5 @@ public function showDetailForm($id)
 
     return view('report.detail-form', compact('report', 'items', 'itemCounts'));
 }
-
-
-
-
-
 }
+    

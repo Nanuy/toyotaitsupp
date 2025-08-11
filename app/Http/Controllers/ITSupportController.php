@@ -9,6 +9,11 @@ use App\Models\Item;
 use App\Models\ReportDetail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
+use App\Models\Signature;
+use App\Http\Controllers\WhatsappController;
+use Illuminate\Support\Facades\Log;
 
 
 class ITSupportController extends Controller
@@ -65,23 +70,24 @@ class ITSupportController extends Controller
     $report = Report::findOrFail($reportId);
 
     $validated = $request->validate([
-        'item_id' => 'required|exists:items,id',
-        'tindakan' => 'required|string',
-        'uraian_masalah' => 'required|string',
-        'surat_jalan_date' => 'required|date',
+    'item_id' => 'required|exists:items,id',
+    'tindakan' => 'required|string',
+    'uraian_masalah' => 'required|string',
     ]);
 
     // Simpan detail tindakan
     ReportDetail::create([
-        'report_id' => $report->id,
-        'item_id' => $validated['item_id'],
-        'tindakan' => $validated['tindakan'],
-        'uraian_masalah' => $validated['uraian_masalah'],
+    'report_id' => $report->id,
+    'item_id' => $validated['item_id'],
+    'tindakan' => $validated['tindakan'],
+    'uraian_masalah' => $validated['uraian_masalah'],
     ]);
 
-    // Simpan tanggal surat jalan ke tabel reports
-    $report->surat_jalan_date = $validated['surat_jalan_date'];
-    $report->save();
+    if ($request->filled('surat_jalan_date')) {
+        $report->surat_jalan_date = $request->surat_jalan_date;
+        $report->save();
+}
+
 
     return back()->with('success', 'Detail laporan & tanggal surat jalan berhasil disimpan.');
 }
@@ -92,24 +98,28 @@ class ITSupportController extends Controller
      */
     public function generateSuratTugas($id)
 {
-    $report = Report::with(['item', 'location', 'itSupports'])->findOrFail($id);
+    $report = Report::with(['item', 'location', 'itSupports', 'signatures'])->findOrFail($id);
 
     if ($report->status !== 'accepted') {
         return back()->with('error', 'Surat tugas hanya bisa dicetak setelah laporan di-accept.');
     }
 
-    // Ambil tanggal surat jalan jika ada
-    $tanggalSurat = $report->surat_jalan_date
-        ? \Carbon\Carbon::parse($report->surat_jalan_date)->translatedFormat('d F Y')
-        : '-';
+    if (!$report->surat_jalan_date) {
+        return back()->with('error', 'Tanggal surat jalan wajib diisi sebelum mencetak surat tugas.');
+    }
+
+    $tanggalSurat = \Carbon\Carbon::parse($report->surat_jalan_date)->translatedFormat('d F Y');
+    $signatures = $report->signatures->keyBy('role');
 
     $pdf = Pdf::loadView('it_support.surat', [
         'report' => $report,
-        'tanggalSurat' => $tanggalSurat
+        'tanggalSurat' => $tanggalSurat,
+        'signatures' => $signatures
     ]);
 
     return $pdf->stream('surat_tugas.pdf');
 }
+
 
 
 public function pindahDivisi(Request $request, $id)
@@ -154,5 +164,184 @@ public function updateDetail(Request $request, $detail_id)
     return redirect()->route('report.show', $detail->report_id)->with('success', 'Detail tindakan berhasil diperbarui.');
 }
 
+public function simpanTanggalSurat(Request $request, $id)
+{
+    $request->validate([
+        'surat_jalan_date' => 'required|date',
+    ]);
 
+    $report = Report::findOrFail($id);
+    $report->surat_jalan_date = $request->surat_jalan_date;
+    $report->save();
+
+    return back()->with('success', 'Tanggal surat jalan berhasil disimpan.');
+}
+
+public function nextDay(Request $request, $id)
+{
+    $report = Report::with(['item', 'location', 'user'])->findOrFail($id);
+
+    // Pastikan status 'accepted'
+    if ($report->status !== 'accepted') {
+        return back()->with('error', 'Laporan belum berstatus accepted.');
+    }
+
+    // Generate ulang report_code dan report_pass
+    $report->report_code = 'RPT-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+    $report->report_pass = Str::random(8);
+
+    // Hapus tanda tangan dari tabel signatures
+    Signature::where('report_id', $report->id)->delete();
+
+    $report->save();
+
+    // Kirim ulang pesan WhatsApp ke semua IT Support yang terkait dengan laporan ini
+    $itSupports = $report->users; // Pastikan relasi 'users' tersedia dan sesuai
+    $link = route('report.show', $report->id); // Ganti dengan route detail laporan kamu
+
+    foreach ($itSupports as $user) {
+        app(WhatsappController::class)->sendToItSupport(
+            $user->contact,
+            $user->division ?? $user->position ?? '-', // fallback
+            $report->location->name ?? '-',
+            $report->reporter_name,
+            $report->description,
+            $link
+        );
+    }
+
+    return back()->with('success', 'Next Day berhasil: kode/password di-reset, tanda tangan dihapus, dan notifikasi dikirim ulang.');
+}
+
+    /**
+     * Tambah item baru ke laporan yang sudah ada
+     */
+    public function addItemToReport(Request $request, $report_id)
+    {
+        try {
+            $request->validate([
+                'item_id' => 'required|exists:items,id',
+                'tindakan' => 'required|string|max:255',
+                'uraian_masalah' => 'required|string',
+            ]);
+
+            $report = Report::findOrFail($report_id);
+            
+            // Cek apakah item sudah ada di laporan ini
+            $existingItem = ReportDetail::where('report_id', $report_id)
+                ->where('item_id', $request->item_id)
+                ->first();
+                
+            if ($existingItem) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item ini sudah ada dalam laporan ini.'
+                ], 400);
+            }
+
+            // Buat record baru di report_details
+            ReportDetail::create([
+                'report_id' => $report_id,
+                'item_id' => $request->item_id,
+                'tindakan' => $request->tindakan,
+                'uraian_masalah' => $request->uraian_masalah,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item berhasil ditambahkan ke laporan.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to add item to report: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menambahkan item.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update item dalam laporan
+     */
+    public function updateReportItem(Request $request, $report_id, $detail_id)
+    {
+        try {
+            $request->validate([
+                'item_id' => 'required|exists:items,id',
+                'tindakan' => 'required|string|max:255',
+                'uraian_masalah' => 'required|string',
+            ]);
+
+            $detail = ReportDetail::where('report_id', $report_id)
+                ->where('id', $detail_id)
+                ->firstOrFail();
+
+            // Cek apakah item sudah ada di laporan ini (kecuali yang sedang diupdate)
+            $existingItem = ReportDetail::where('report_id', $report_id)
+                ->where('item_id', $request->item_id)
+                ->where('id', '!=', $detail_id)
+                ->first();
+                
+            if ($existingItem) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item ini sudah ada dalam laporan ini.'
+                ], 400);
+            }
+
+            $detail->update([
+                'item_id' => $request->item_id,
+                'tindakan' => $request->tindakan,
+                'uraian_masalah' => $request->uraian_masalah,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item berhasil diupdate.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to update report item: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengupdate item.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Hapus item dari laporan
+     */
+    public function removeItemFromReport($report_id, $detail_id)
+    {
+        try {
+            $detail = ReportDetail::where('report_id', $report_id)
+                ->where('id', $detail_id)
+                ->firstOrFail();
+
+            // Pastikan tidak menghapus semua item dari laporan
+            $totalItems = ReportDetail::where('report_id', $report_id)->count();
+            if ($totalItems <= 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat menghapus item terakhir dari laporan.'
+                ], 400);
+            }
+
+            $detail->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item berhasil dihapus dari laporan.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to remove item from report: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menghapus item.'
+            ], 500);
+        }
+    }
 }

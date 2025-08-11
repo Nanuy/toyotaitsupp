@@ -15,11 +15,11 @@ class css
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (str_ends_with($request->getHost(),'ngrok-free.app')) 
-            {
-               \Illuminate\Support\Facades\URL::forceScheme('https'); 
+        // if (str_ends_with($request->getHost(),'ngrok-free.app')) 
+        //     {
+        //        \Illuminate\Support\Facades\URL::forceScheme('https'); 
             
-        }
+        // }
         return $next($request);
     }
 }

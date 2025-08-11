@@ -23,7 +23,7 @@ class LoginController extends Controller
         $user = Auth::user();
 
         if ($user->role === 'superadmin') {
-            return redirect()->route('dashboard.superadmin');
+            return redirect()->route('register.custom');
         } elseif ($user->role === 'it_supp') {
             return redirect()->route('it_support.reports');
         }
