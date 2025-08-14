@@ -344,4 +344,139 @@ public function nextDay(Request $request, $id)
             ], 500);
         }
     }
+
+/**
+ * Menandai laporan sebagai Done dan menandatangani sebagai Head Dept
+ */
+public function markAsDone(Request $request, $id)
+{
+    $report = Report::findOrFail($id);
+    
+    // Verifikasi bahwa user adalah IT Support yang ditugaskan
+    $isAssigned = $report->itSupports->contains(function ($it) {
+        return $it->id === auth()->id();
+    });
+    
+    if (!$isAssigned) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk menandai laporan ini sebagai selesai.');
+    }
+    
+    // Verifikasi bahwa IT Support sudah menandatangani
+    if (!$report->hasUserSigned(auth()->id())) {
+        return redirect()->back()->with('error', 'Anda harus menandatangani laporan terlebih dahulu sebelum menandai sebagai selesai.');
+    }
+    
+    // Update status menjadi completed  
+    $report->status = 'completed';
+    $report->save();
+    
+    // Tambahkan tanda tangan head dept (menggunakan tanda tangan IT Support yang login)
+    $userSignature = $report->getSignatureForUser(auth()->id());
+    if ($userSignature) {
+        Signature::updateOrCreate(
+            [
+                'report_id' => $report->id,
+                'user_id' => auth()->id(),
+                'role' => 'head_dept',
+            ],
+            [
+                'signature_path' => $userSignature->signature_path,
+                'signed_at' => now(),
+            ]
+        );
+    }
+    
+    return redirect()->back()->with('success', 'Laporan berhasil ditandai sebagai selesai dan tanda tangan Head Dept telah ditambahkan.');
 }
+
+/**
+ * Generate Surat Pemeriksaan Perangkat IT
+ */
+public function generateSuratPemeriksaan($id)
+{
+    $report = Report::with(['item', 'location', 'itSupports', 'signatures', 'details'])->findOrFail($id);
+
+    if ($report->status !== 'accepted') {
+        return back()->with('error', 'Surat pemeriksaan hanya bisa dicetak setelah laporan di-accept.');
+    }
+
+    // Generate nomor surat berdasarkan urutan bulan
+    $currentMonth = now()->month;
+    $currentYear = now()->year;
+    
+    $monthlyCount = Report::whereMonth('created_at', $currentMonth)
+        ->whereYear('created_at', $currentYear)
+        ->orderBy('created_at')
+        ->pluck('id');
+    
+    $currentIndex = $monthlyCount->search($report->id) + 1;
+    $bulan = str_pad($currentMonth, 2, '0', STR_PAD_LEFT);
+    $tahun = $currentYear;
+    
+    $tanggalSurat = now()->translatedFormat('d F Y');
+    $signatures = $report->signatures->keyBy('role');
+
+    $pdf = Pdf::loadView('it_support.surat_pemeriksaan', [
+        'report' => $report,
+        'tanggalSurat' => $tanggalSurat,
+        'signatures' => $signatures,
+        'nomorSurat' => sprintf('%03d/HO/IT/04/%s', $currentIndex, $tahun),
+        'bulan' => $bulan,
+        'tahun' => $tahun
+    ]);
+
+    return $pdf->stream('berita_acara_pemeriksaan_perangkat_it.pdf');
+}
+
+/**
+ * Update data pemeriksaan perangkat IT
+ */
+public function updateInspectionData(Request $request, $id)
+{
+    $request->validate([
+        'merek_tipe' => 'nullable|string|max:255',
+        'dampak_ditimbulkan' => 'nullable|string',
+        'tindakan_dilakukan' => 'nullable|string',
+        'rekomendasi_teknis' => 'nullable|string',
+        'spesifikasi_pengadaan' => 'nullable|string|max:255',
+    ]);
+
+    $report = Report::findOrFail($id);
+    
+    // Verifikasi bahwa user adalah IT Support yang ditugaskan
+    $isAssigned = $report->itSupports->contains(function ($it) {
+        return $it->id === auth()->id();
+    });
+    
+    if (!$isAssigned) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk mengupdate data pemeriksaan ini.');
+    }
+
+    $report->update([
+        'merek_tipe' => $request->merek_tipe,
+        'dampak_ditimbulkan' => $request->dampak_ditimbulkan,
+        'tindakan_dilakukan' => $request->tindakan_dilakukan,
+        'rekomendasi_teknis' => $request->rekomendasi_teknis,
+        'spesifikasi_pengadaan' => $request->spesifikasi_pengadaan,
+    ]);
+
+    return redirect()->back()->with('success', 'Data pemeriksaan berhasil disimpan.');
+}
+
+/**
+ * Tampilkan halaman form pemeriksaan perangkat IT
+ */
+public function showFormPemeriksaan($id)
+{
+    $report = Report::findOrFail($id);
+    
+    // Verifikasi akses
+    if (auth()->user()->role !== 'it_supp' || $report->status !== 'accepted') {
+        return redirect()->back()->with('error', 'Akses ditolak atau laporan belum diterima.');
+    }
+    
+    return view('it_support.form_pemeriksaan', compact('report'));
+}
+}
+
+

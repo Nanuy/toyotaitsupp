@@ -1,4 +1,4 @@
-@extends('master')
+@extends('layouts.itsupport')
 
 @section('title', 'Daftar Laporan')
 

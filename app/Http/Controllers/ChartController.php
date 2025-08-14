@@ -49,8 +49,9 @@ class ChartController extends Controller
     {
         $locations = Location::orderBy('name')->get();
         $items = Item::orderBy('name')->get();
+        $itSupports = \App\Models\User::where('role', 'it_supp')->orderBy('name')->get();
         
-        return view('chart.itsupport', compact('locations', 'items'));
+        return view('chart.itsupport', compact('locations', 'items', 'itSupports'));
     }
 
     /**
@@ -68,23 +69,25 @@ class ChartController extends Controller
             $endDate = $request->input('end_date');
             $locationFilter = $request->input('location_filter');
             $itemFilter = $request->input('item_filter');
+            $categoryFilter = $request->input('category_filter'); // Tambahan baru
             $sortBy = $request->input('sort_by', 'total_desc');
             $limitData = $request->input('limit_data', '5');
-
+    
             Log::info('Chart data request parameters', [
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'location_filter' => $locationFilter,
                 'item_filter' => $itemFilter,
+                'category_filter' => $categoryFilter, // Tambahan baru
                 'sort_by' => $sortBy,
                 'limit_data' => $limitData,
                 'all_inputs' => $request->all()
             ]);
-
+    
             // Base query
             $reports = Report::query();
             Log::info('Base query created');
-
+    
             // Apply date filter
             if ($startDate && $endDate) {
                 $reports->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
@@ -94,13 +97,21 @@ class ChartController extends Controller
                 $reports->where('created_at', '>=', now()->subDays(30));
                 Log::info('Default date filter applied (last 30 days)');
             }
-
+    
             // Apply location filter
             if ($locationFilter) {
                 $reports->where('location_id', $locationFilter);
                 Log::info('Location filter applied', ['location_id' => $locationFilter]);
             }
-
+    
+            // Apply category filter (SJM/Non SJM)
+            if ($categoryFilter) {
+                $reports->whereHas('location', function($q) use ($categoryFilter) {
+                    $q->where('category', $categoryFilter);
+                });
+                Log::info('Category filter applied', ['category' => $categoryFilter]);
+            }
+    
             // Apply item filter (dari tabel report_details, bukan reports)
             if ($itemFilter) {
                 // Join ke report_details dan filter berdasarkan item_id
@@ -113,30 +124,34 @@ class ChartController extends Controller
             // Log the total count before processing
             $totalReports = $reports->count();
             Log::info('Total reports after filters', ['count' => $totalReports]);
-
+    
             // Get summary data
             $summaryData = $this->getSummaryData($reports->clone(), $startDate, $endDate);
-
+    
             // Data untuk Chart per Cabang
             $cabangData = $this->getCabangData($reports->clone(), $sortBy, $limitData);
-
+    
             // Data untuk Chart per Kategori (berdasarkan report_details - satu item per laporan)
             $kategoriData = $this->getKategoriData($reports->clone(), $sortBy, $limitData);
-
+    
             // Data untuk Chart Rentang Waktu (per hari)
-            $waktuData = $this->getWaktuData($reports->clone());
-
+            $waktuData = $this->getWaktuDataFromQuery($reports->clone());
+    
             // Data untuk Chart Top Items (berdasarkan report_details)
             $topItemData = $this->getTopItemData($reports->clone(), $sortBy, $limitData);
-
+    
+            // Data untuk Chart Status
+            $statusData = $this->getStatusData($reports->clone());
+    
             $response = [
                 'summary' => $summaryData,
                 'cabangData' => $cabangData,
                 'kategoriData' => $kategoriData,
                 'waktuData' => $waktuData,
                 'topItemData' => $topItemData,
+                'statusData' => $statusData,
             ];
-
+    
             Log::info('Chart data response prepared', [
                 'summary_count' => count($summaryData),
                 'cabang_count' => count($cabangData),
@@ -144,7 +159,7 @@ class ChartController extends Controller
                 'waktu_count' => count($waktuData),
                 'topItem_count' => count($topItemData)
             ]);
-
+    
             Log::info('=== ChartController::getChartData completed successfully ===');
             return response()->json($response);
         } catch (\Exception $e) {
@@ -176,22 +191,31 @@ class ChartController extends Controller
             $endDate = $request->input('end_date');
             $locationFilter = $request->input('location_filter');
             $itemFilter = $request->input('item_filter');
+            $itSupportFilter = $request->input('it_support_filter');
+            $categoryFilter = $request->input('category_filter'); // Tambahan baru
             $sortBy = $request->input('sort_by', 'total_desc');
             $limitData = $request->input('limit_data', '5');
 
             // Base query
             $reports = Report::query();
 
-            // Apply date filter
+            // Apply date filter - CHANGED TO updated_at
             if ($startDate && $endDate) {
-                $reports->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                $reports->whereBetween('updated_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             } else {
-                $reports->where('created_at', '>=', now()->subDays(30));
+                $reports->where('updated_at', '>=', now()->subDays(30));
             }
 
             // Apply location filter
             if ($locationFilter) {
                 $reports->where('location_id', $locationFilter);
+            }
+
+            // Apply category filter (SJM/Non SJM)
+            if ($categoryFilter) {
+                $reports->whereHas('location', function($q) use ($categoryFilter) {
+                    $q->where('category', $categoryFilter);
+                });
             }
 
             // Apply item filter
@@ -201,11 +225,18 @@ class ChartController extends Controller
                 });
             }
 
+            // Apply IT Support filter (reports that include selected IT Support)
+            if ($itSupportFilter) {
+                $reports->whereHas('itSupports', function($q) use ($itSupportFilter) {
+                    $q->where('users.id', $itSupportFilter);
+                });
+            }
+
             // Get IT Support specific data
             $summaryData = $this->getITSupportSummaryData($reports->clone(), $startDate, $endDate);
             $statusData = $this->getStatusData($reports->clone());
-            $itSupportPerformanceData = $this->getITSupportPerformanceData($reports->clone(), $sortBy, $limitData);
-            $monthlyData = $this->getMonthlyData($reports->clone());
+            $itSupportPerformanceData = $this->getITSupportPerformanceData($reports->clone(), $itSupportFilter, $sortBy, $limitData);
+            $monthlyData = $this->getMonthlyDataFromQuery($reports->clone());
             $topItemsData = $this->getTopItemData($reports->clone(), $sortBy, $limitData);
 
             $response = [
@@ -267,43 +298,173 @@ class ChartController extends Controller
     {
         $statusData = $query->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
+            ->orderBy('total', 'desc')
             ->get();
 
+        // Ensure we have all status types even if count is 0
+        $allStatuses = ['waiting', 'accepted', 'completed'];
+        $statusCounts = [];
+        
+        foreach ($allStatuses as $status) {
+            $found = $statusData->firstWhere('status', $status);
+            $statusCounts[$status] = $found ? $found->total : 0;
+        }
+
         return [
-            'labels' => $statusData->pluck('status'),
-            'values' => $statusData->pluck('total'),
+            'labels' => array_keys($statusCounts),
+            'values' => array_values($statusCounts),
         ];
     }
 
     /**
      * Get IT Support performance data
      */
-    private function getITSupportPerformanceData($query, $sortBy, $limitData)
+    private function getITSupportPerformanceData($query, $itSupportFilter = null, $sortBy = 'total_desc', $limitData = 'all')
     {
-        $performanceData = DB::table('report_user')
-            ->join('users', 'users.id', '=', 'report_user.user_id')
-            ->join('reports', 'reports.id', '=', 'report_user.report_id')
-            ->where('users.role', 'it_supp')
-            ->whereIn('reports.id', $query->pluck('id'))
-            ->select('users.name', DB::raw('COUNT(*) as total'))
-            ->groupBy('users.name')
-            ->orderBy('total', 'desc')
-            ->limit($limitData === 'all' ? 1000 : (int)$limitData)
+        // All IT Support users
+        $allITS = DB::table('users')
+            ->where('role', 'it_supp')
+            ->select('id', 'name')
+            ->orderBy('name')
             ->get();
-
+    
+        if ($itSupportFilter) {
+            $allITS = $allITS->where('id', (int)$itSupportFilter);
+        }
+    
+        $reportIds = $query->pluck('id');
+    
+        // Team size per report (empty if no reports in range)
+        $teamSizes = collect();
+        if ($reportIds->isNotEmpty()) {
+            $teamSizes = DB::table('report_user')
+                ->select('report_id', DB::raw('COUNT(user_id) as total'))
+                ->whereIn('report_id', $reportIds)
+                ->groupBy('report_id')
+                ->pluck('total', 'report_id');
+        }
+    
+        // Get team collaborations (untuk laporan dengan lebih dari 1 anggota)
+        $teamCollaborations = []; // Changed from collect() to array
+        if ($reportIds->isNotEmpty()) {
+            $teamReports = DB::table('report_user')
+                ->join('users', 'users.id', '=', 'report_user.user_id')
+                ->whereIn('report_user.report_id', $reportIds)
+                ->where('users.role', 'it_supp')
+                ->select('report_user.report_id', 'users.name')
+                ->get()
+                ->groupBy('report_id')
+                ->filter(function ($members) {
+                    return $members->count() > 1; // Hanya tim dengan lebih dari 1 anggota
+                })
+                ->map(function ($members) {
+                    return $members->pluck('name')->sort()->values()->toArray();
+                });
+    
+            // Hitung frekuensi kolaborasi antar anggota
+            foreach ($teamReports as $reportId => $members) {
+                $memberCombination = implode(' & ', $members);
+                if (!isset($teamCollaborations[$memberCombination])) { // Changed from has() to isset()
+                    $teamCollaborations[$memberCombination] = 0;
+                }
+                $teamCollaborations[$memberCombination]++; // Now works with array
+            }
+        }
+    
+        // All assignments for these reports
+        $assignments = collect();
+        if ($reportIds->isNotEmpty()) {
+            $assignmentsQuery = DB::table('report_user')
+                ->join('users', 'users.id', '=', 'report_user.user_id')
+                ->whereIn('report_user.report_id', $reportIds)
+                ->where('users.role', 'it_supp')
+                ->select('users.id as user_id', 'users.name as user_name', 'report_user.report_id');
+    
+            if ($itSupportFilter) {
+                $assignmentsQuery->where('users.id', $itSupportFilter);
+            }
+    
+            $assignments = $assignmentsQuery->get();
+        }
+    
+        // Initialize all users with zero counts
+        $perUser = [];
+        foreach ($allITS as $u) {
+            $perUser[$u->id] = [
+                'name' => $u->name,
+                'solo' => 0,
+                'team' => 0,
+            ];
+        }
+    
+        foreach ($assignments as $row) {
+            $userId = $row->user_id;
+            $teamSize = (int)($teamSizes[$row->report_id] ?? 1);
+            
+            if (!isset($perUser[$userId])) {
+                // Shouldn't occur, but guard anyway
+                $perUser[$userId] = [
+                    'name' => $row->user_name,
+                    'solo' => 0,
+                    'team' => 0,
+                ];
+            }
+            
+            if ($teamSize <= 1) {
+                $perUser[$userId]['solo'] += 1;
+            } else {
+                $perUser[$userId]['team'] += 1;
+            }
+        }
+    
+        // Transform to collection and apply sorting
+        $collection = collect($perUser)->map(function ($v) {
+            $v['total'] = $v['solo'] + $v['team'];
+            return $v;
+        });
+    
+        switch ($sortBy) {
+            case 'total_asc':
+                $collection = $collection->sortBy('total');
+                break;
+            case 'name_asc':
+                $collection = $collection->sortBy('name');
+                break;
+            case 'name_desc':
+                $collection = $collection->sortByDesc('name');
+                break;
+            case 'total_desc':
+            default:
+                $collection = $collection->sortByDesc('total');
+                break;
+        }
+    
+        if ($limitData !== 'all') {
+            $collection = $collection->take((int)$limitData);
+        }
+    
         return [
-            'labels' => $performanceData->pluck('name'),
-            'values' => $performanceData->pluck('total'),
+            'labels' => $collection->pluck('name')->values(),
+            'values' => $collection->pluck('total')->values(),
+            'soloValues' => $collection->pluck('solo')->values(),
+            'teamValues' => $collection->pluck('team')->values(),
+            'teamCollaborations' => collect($teamCollaborations)->sortByDesc(function ($value) {
+                return $value; // Fixed: removed $key parameter
+            })->toArray(), // Top 10 kolaborasi tim
         ];
     }
 
     /**
      * Get monthly data
      */
-    private function getMonthlyData($query)
+    /**
+     * Get monthly data from query builder (helper method)
+     */
+    private function getMonthlyDataFromQuery($query)
     {
-        $monthlyData = $query->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('count(*) as total'))
-            ->groupBy('month')
+        $monthlyData = $query
+            ->select(DB::raw('MONTH(updated_at) as month'), DB::raw('count(*) as total'))
+            ->groupBy(DB::raw('MONTH(updated_at)'))
             ->orderBy('month')
             ->get();
 
@@ -311,6 +472,41 @@ class ChartController extends Controller
             'labels' => $monthlyData->pluck('month'),
             'values' => $monthlyData->pluck('total'),
         ];
+    }
+
+    /**
+     * Get monthly data (public method for direct API calls)
+     */
+    public function getMonthlyData(Request $request)
+    {
+        $year = $request->input('year', date('Y'));
+        $locationFilter = $request->input('location_filter');
+        $itemFilter = $request->input('item_filter');
+        $categoryFilter = $request->input('category_filter');
+
+        $query = Report::query()
+            ->whereYear('updated_at', $year);
+
+        // Apply location filter
+        if ($locationFilter) {
+            $query->where('location_id', $locationFilter);
+        }
+
+        // Apply category filter
+        if ($categoryFilter) {
+            $query->whereHas('location', function($q) use ($categoryFilter) {
+                $q->where('category', $categoryFilter);
+            });
+        }
+
+        // Apply item filter
+        if ($itemFilter) {
+            $query->whereHas('details', function($q) use ($itemFilter) {
+                $q->where('item_id', $itemFilter);
+            });
+        }
+
+        return $this->getMonthlyDataFromQuery($query);
     }
 
     /**
@@ -405,9 +601,48 @@ class ChartController extends Controller
     /**
      * Get data for time trend chart
      */
-    private function getWaktuData($query)
+    public function getWaktuData(Request $request)
     {
-        $waktuData = $query->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as total'))
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $locationFilter = $request->input('location_filter');
+        $itemFilter = $request->input('item_filter');
+        $categoryFilter = $request->input('category_filter');
+
+        $query = Report::query();
+
+        // Apply date filter - CHANGED TO updated_at
+        if ($startDate && $endDate) {
+            $query->whereBetween('updated_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        } else {
+            $query->where('updated_at', '>=', now()->subDays(30));
+        }
+
+        // Apply location filter
+        if ($locationFilter) {
+            $query->where('location_id', $locationFilter);
+        }
+
+        // Apply category filter
+        if ($categoryFilter) {
+            $query->whereHas('location', function($q) use ($categoryFilter) {
+                $q->where('category', $categoryFilter);
+            });
+        }
+
+        // Apply item filter
+        if ($itemFilter) {
+            $query->whereHas('details', function($q) use ($itemFilter) {
+                $q->where('item_id', $itemFilter);
+            });
+        }
+
+        return $this->getWaktuDataFromQuery($query);
+    }
+
+    private function getWaktuDataFromQuery($query)
+    {
+        $waktuData = $query->select(DB::raw('DATE(updated_at) as date'), DB::raw('count(*) as total'))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
@@ -494,25 +729,47 @@ class ChartController extends Controller
             $endDate = $request->input('end_date');
             $locationFilter = $request->input('location_filter');
             $itemFilter = $request->input('item_filter');
+            $categoryFilter = $request->input('category_filter'); // Tambahan baru
             $search = $request->input('search');
             $perPage = $request->input('per_page', 10);
 
-            $query = Report::with(['location', 'details.item', 'user']);
+            $query = Report::with(['location', 'details.item']);
 
-            // Apply filters
-            if ($startDate && $endDate) {
-                $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-            }
+        // Apply filters - CHANGED TO updated_at
+        if ($startDate && $endDate) {
+            $query->whereBetween('updated_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        }
 
-            if ($locationFilter) {
-                $query->where('location_id', $locationFilter);
-            }
+        if ($locationFilter) {
+            $query->where('location_id', $locationFilter);
+        }
 
-            if ($itemFilter) {
-                $query->whereHas('details', function($q) use ($itemFilter) {
-                    $q->where('item_id', $itemFilter);
-                });
-            }
+        // Apply category filter
+        if ($categoryFilter) {
+            $query->whereHas('location', function($q) use ($categoryFilter) {
+                $q->where('category', $categoryFilter);
+            });
+        }
+
+        if ($itemFilter) {
+            $query->whereHas('details', function($q) use ($itemFilter) {
+                $q->where('item_id', $itemFilter);
+            });
+        }
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('issue_description', 'like', "%{$search}%")
+                  ->orWhere('reporter_name', 'like', "%{$search}%")
+                  ->orWhereHas('location', function($locationQuery) use ($search) {
+                      $locationQuery->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('details.item', function($itemQuery) use ($search) {
+                      $itemQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
 
             if ($search) {
                 $query->where(function($q) use ($search) {
@@ -528,7 +785,7 @@ class ChartController extends Controller
                 });
             }
 
-            $reports = $query->orderBy('created_at', 'desc')->paginate($perPage);
+            $reports = $query->orderBy('updated_at', 'desc')->paginate($perPage); // CHANGED TO updated_at
 
             // Transform the data to include the first item from report_details
             $reports->getCollection()->transform(function ($report) {
@@ -559,18 +816,51 @@ class ChartController extends Controller
         $period1End = $request->input('period1_end');
         $period2Start = $request->input('period2_start');
         $period2End = $request->input('period2_end');
+        $locationFilter = $request->input('location_filter');
+        $itemFilter = $request->input('item_id');
+        $categoryFilter = $request->input('category_filter'); // Tambahan baru
 
-        // Period 1 data
-        $period1Reports = Report::whereBetween('created_at', [
-            $period1Start . ' 00:00:00', 
-            $period1End . ' 23:59:59'
-        ])->count();
+        // Period 1 data - CHANGED TO updated_at
+        $period1Query = Report::whereBetween('updated_at', [$period1Start . ' 00:00:00', $period1End . ' 23:59:59']);
+        
+        if ($locationFilter) {
+            $period1Query->where('location_id', $locationFilter);
+        }
+        
+        if ($categoryFilter) {
+            $period1Query->whereHas('location', function($q) use ($categoryFilter) {
+                $q->where('category', $categoryFilter);
+            });
+        }
+        
+        if ($itemFilter) {
+            $period1Query->whereHas('details', function($q) use ($itemFilter) {
+                $q->where('item_id', $itemFilter);
+            });
+        }
 
-        // Period 2 data
-        $period2Reports = Report::whereBetween('created_at', [
-            $period2Start . ' 00:00:00', 
-            $period2End . ' 23:59:59'
-        ])->count();
+        $period1Reports = $period1Query->count();
+
+        // Period 2 data - CHANGED TO updated_at
+        $period2Query = Report::whereBetween('updated_at', [$period2Start . ' 00:00:00', $period2End . ' 23:59:59']);
+        
+        if ($locationFilter) {
+            $period2Query->where('location_id', $locationFilter);
+        }
+        
+        if ($categoryFilter) {
+            $period2Query->whereHas('location', function($q) use ($categoryFilter) {
+                $q->where('category', $categoryFilter);
+            });
+        }
+        
+        if ($itemFilter) {
+            $period2Query->whereHas('details', function($q) use ($itemFilter) {
+                $q->where('item_id', $itemFilter);
+            });
+        }
+
+        $period2Reports = $period2Query->count();
 
         // Calculate percentage change
         $percentageChange = 0;
@@ -600,29 +890,48 @@ class ChartController extends Controller
     /**
      * Get real-time statistics
      */
-    public function getRealTimeStats()
+    public function getRealTimeStats(Request $request)
     {
-        $today = Carbon::today();
-        $yesterday = Carbon::yesterday();
-        $thisWeek = Carbon::now()->startOfWeek();
-        $lastWeek = Carbon::now()->subWeek()->startOfWeek();
-        $thisMonth = Carbon::now()->startOfMonth();
-        $lastMonth = Carbon::now()->subMonth()->startOfMonth();
+        $locationFilter = $request->input('location_filter');
+        $itemFilter = $request->input('item_filter');
+        $categoryFilter = $request->input('category_filter'); // Tambahan baru
+
+        $baseQuery = Report::query();
+
+        if ($locationFilter) {
+            $baseQuery->where('location_id', $locationFilter);
+        }
+
+        if ($categoryFilter) {
+            $baseQuery->whereHas('location', function($q) use ($categoryFilter) {
+                $q->where('category', $categoryFilter);
+            });
+        }
+
+        if ($itemFilter) {
+            $baseQuery->whereHas('details', function($q) use ($itemFilter) {
+                $q->where('item_id', $itemFilter);
+            });
+        }
+
+        // Today's reports - CHANGED TO updated_at
+        $todayReports = (clone $baseQuery)->whereDate('updated_at', today())->count();
+        
+        // This week's reports - CHANGED TO updated_at
+        $weekReports = (clone $baseQuery)->whereBetween('updated_at', [
+            now()->startOfWeek(),
+            now()->endOfWeek()
+        ])->count();
+        
+        // This month's reports - CHANGED TO updated_at
+        $monthReports = (clone $baseQuery)->whereMonth('updated_at', now()->month)
+            ->whereYear('updated_at', now()->year)->count();
 
         return response()->json([
-            'today' => Report::whereDate('created_at', $today)->count(),
-            'yesterday' => Report::whereDate('created_at', $yesterday)->count(),
-            'this_week' => Report::where('created_at', '>=', $thisWeek)->count(),
-            'last_week' => Report::whereBetween('created_at', [
-                $lastWeek, 
-                $lastWeek->copy()->endOfWeek()
-            ])->count(),
-            'this_month' => Report::where('created_at', '>=', $thisMonth)->count(),
-            'last_month' => Report::whereBetween('created_at', [
-                $lastMonth, 
-                $lastMonth->copy()->endOfMonth()
-            ])->count(),
-            'total_all_time' => Report::count(),
+            'today' => $todayReports,
+            'this_week' => $weekReports,
+            'this_month' => $monthReports,
+            'total_all_time' => (clone $baseQuery)->count(),
             'last_updated' => now()->toISOString()
         ]);
     }
@@ -636,19 +945,28 @@ class ChartController extends Controller
         $endDate = $request->input('end_date');
         $locationFilter = $request->input('location_filter');
         $itemFilter = $request->input('item_filter');
-        $format = $request->input('format', 'excel'); // excel, csv, pdf
+        $categoryFilter = $request->input('category_filter');
+        $format = $request->input('format', 'excel');
 
         $query = Report::with(['location', 'details.item', 'user']);
 
-        // Apply filters
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $query->whereBetween('updated_at', [
+                $startDate . ' 00:00:00',
+                $endDate . ' 23:59:59'
+            ]);
         } else {
-            $query->where('created_at', '>=', now()->subDays(30));
+            $query->where('updated_at', '>=', now()->subDays(30));
         }
 
         if ($locationFilter) {
             $query->where('location_id', $locationFilter);
+        }
+
+        if ($categoryFilter) {
+            $query->whereHas('location', function($q) use ($categoryFilter) {
+                $q->where('category', $categoryFilter);
+            });
         }
 
         if ($itemFilter) {
@@ -657,17 +975,17 @@ class ChartController extends Controller
             });
         }
 
-        $reports = $query->orderBy('created_at', 'desc')->get();
+        $reports = $query->orderBy('updated_at', 'desc')->get();
 
-        // Transform data for export
         $exportData = $reports->map(function ($report) {
             $firstDetail = $report->details->first();
             $itemName = $firstDetail && $firstDetail->item ? $firstDetail->item->name : 'Tidak Ada';
-            
+
             return [
                 'ID' => $report->id,
-                'Tanggal' => $report->created_at->format('d/m/Y H:i'),
-                'Cabang' => $report->location ? $report->location->name : 'Tidak Ada',
+                'Tanggal Update' => $report->updated_at->format('d/m/Y H:i'),
+                'Cabang' => $report->location->name ?? 'Tidak Ada',
+                'Kategori Cabang' => $report->location->category ?? 'Tidak Ada',
                 'Item/Kategori' => $itemName,
                 'Deskripsi' => $report->description ?? $report->issue_description ?? '',
                 'Status' => $report->status ?? 'Pending',
@@ -677,37 +995,33 @@ class ChartController extends Controller
             ];
         });
 
-        // For now, return JSON response
-        // In production, implement with Laravel Excel package
-        if ($format === 'csv') {
-            return $this->exportToCsv($exportData, $startDate, $endDate);
-        } elseif ($format === 'pdf') {
-            return $this->exportToPdf($exportData, $startDate, $endDate);
-        } else {
-            // Excel format (default)
-            return response()->json([
-                'message' => 'Export ready for download',
+    // Export sesuai format
+    if ($format === 'csv') {
+        return $this->exportToCsv($exportData, $startDate, $endDate);
+    } elseif ($format === 'pdf') {
+        return $this->exportToPdf($exportData, $startDate, $endDate);
+    } else {
+        // Excel format (default)
+        return response()->json([
+            'message' => 'Export ready for download',
+            'format' => $format,
+            'total_records' => $exportData->count(),
+            'period' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ],
+            'preview_data' => $exportData->take(5),
+            'download_url' => route('reports.download', [
                 'format' => $format,
-                'total_records' => $exportData->count(),
-                'period' => [
-                    'start_date' => $startDate,
-                    'end_date' => $endDate
-                ],
-                'preview_data' => $exportData->take(5),
-                'download_url' => route('reports.download', [
-                    'format' => $format,
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                    'location_filter' => $locationFilter,
-                    'item_filter' => $itemFilter
-                ])
-            ]);
-        }
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'location_filter' => $locationFilter,
+                'item_filter' => $itemFilter
+            ])
+        ]);
     }
+}
 
-    /**
-     * Export to CSV format
-     */
     private function exportToCsv($data, $startDate, $endDate)
     {
         $filename = 'laporan_' . ($startDate ? $startDate . '_to_' . $endDate : 'all') . '.csv';
@@ -773,29 +1087,48 @@ class ChartController extends Controller
     {
         try {
             $period = $request->input('period', '30'); // days
+            $categoryFilter = $request->input('category_filter'); // Tambahan baru
 
             $startDate = now()->subDays((int)$period)->startOfDay();
             $endDate = now()->endOfDay();
 
-            // Top locations by reports
-            $topLocations = Report::with('location')
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->select('location_id', DB::raw('count(*) as total'))
-                ->groupBy('location_id')
+            // All locations with reports - CHANGED TO updated_at
+            $locationQuery = Location::leftJoin('reports', function($join) use ($startDate, $endDate) {
+                    $join->on('locations.id', '=', 'reports.location_id')
+                         ->whereBetween('reports.updated_at', [$startDate, $endDate]);
+                })
+                ->select('locations.id', 'locations.name', 'locations.category', DB::raw('COUNT(reports.id) as total'))
+                ->groupBy('locations.id', 'locations.name', 'locations.category');
+
+            // Apply category filter
+            if ($categoryFilter) {
+                $locationQuery->where('locations.category', $categoryFilter);
+            }
+
+            $allLocations = $locationQuery
                 ->orderByDesc('total')
-                ->limit(5)
+                ->orderBy('locations.name')
                 ->get()
                 ->map(function($item) {
                     return [
-                        'name' => $item->location ? $item->location->name : 'Tidak Ada',
+                        'name' => $item->name,
+                        'category' => $item->category,
                         'total' => $item->total
                     ];
                 });
 
-            // Recent reports
-            $recentReports = Report::with(['location', 'details.item', 'user'])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->orderBy('created_at', 'desc')
+            // Recent reports - CHANGED TO updated_at
+            $recentQuery = Report::with(['location', 'details.item'])
+                ->whereBetween('updated_at', [$startDate, $endDate]);
+
+            if ($categoryFilter) {
+                $recentQuery->whereHas('location', function($q) use ($categoryFilter) {
+                    $q->where('category', $categoryFilter);
+                });
+            }
+
+            $recentReports = $recentQuery
+                ->orderBy('updated_at', 'desc')
                 ->limit(10)
                 ->get()
                 ->map(function($report) {
@@ -804,17 +1137,26 @@ class ChartController extends Controller
                     
                     return [
                         'id' => $report->id,
-                        'date' => $report->created_at->format('d/m/Y H:i'),
+                        'date' => $report->updated_at->format('d/m/Y H:i'),
                         'location' => $report->location ? $report->location->name : 'Tidak Ada',
+                        'category' => $report->location ? $report->location->category : 'Tidak Ada',
                         'item' => $itemName,
                         'user' => $report->reporter_name ?? 'Tidak Diketahui',
                         'status' => $report->status ?? 'Pending'
                     ];
                 });
 
-            // Trend data for mini charts
-            $trendData = Report::whereBetween('created_at', [$startDate, $endDate])
-                ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as total'))
+            // Trend data for mini charts - CHANGED TO updated_at
+            $trendQuery = Report::whereBetween('updated_at', [$startDate, $endDate]);
+
+            if ($categoryFilter) {
+                $trendQuery->whereHas('location', function($q) use ($categoryFilter) {
+                    $q->where('category', $categoryFilter);
+                });
+            }
+
+            $trendData = $trendQuery
+                ->select(DB::raw('DATE(updated_at) as date'), DB::raw('count(*) as total'))
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get()
@@ -826,7 +1168,7 @@ class ChartController extends Controller
                 });
 
             return response()->json([
-                'top_locations' => $topLocations,
+                'all_locations' => $allLocations,
                 'recent_reports' => $recentReports,
                 'trend_data' => $trendData,
                 'period_info' => [

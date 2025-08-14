@@ -432,12 +432,13 @@ details[open] summary {
 
     <!-- Action Buttons -->
     <div class="mb-4">
-        <a href="{{ route('superadmin.report.surat', $report->id) }}" class="btn btn-success" target="_blank">
+        <a href="{{ route('superadmin.surat-tugas', $report->id) }}" class="btn btn-success" target="_blank">
             <i class="fas fa-file-pdf mr-1"></i> Lihat Surat Tugas
         </a>
         <a href="{{ route('superadmin.reports') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left mr-1"></i> Kembali ke Daftar
         </a>
+    </div>
         
         @if(!$report->surat_jalan_date)
         <div class="alert alert-info mt-2" role="alert">

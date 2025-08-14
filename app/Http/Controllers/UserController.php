@@ -233,7 +233,7 @@ class UserController extends Controller
      */
     public function updateProfile(Request $request)
     {
-        $user = auth()->user();
+$user = auth()?->user();
 
         // Validasi input
         $rules = [

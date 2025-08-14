@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Models\Location;
 
 class SuperadminController extends Controller
 {
@@ -43,8 +44,10 @@ class SuperadminController extends Controller
     /**
      * Menyimpan tanda tangan superadmin untuk laporan
      */
-    public function storeSignature(Request $request, Report $report)
+    public function storeSignature(Request $request, $id)
     {
+        $report = Report::findOrFail($id);
+        
         // Validasi request
         if ($request->has('use_saved_signature') && $request->use_saved_signature == '1') {
             // Menggunakan tanda tangan yang tersimpan
@@ -92,7 +95,7 @@ class SuperadminController extends Controller
             // Jika user belum memiliki tanda tangan tersimpan, tanyakan apakah ingin menyimpannya
             if (!$user->signature_path && $request->has('save_for_later') && $request->save_for_later == '1') {
                 $user->signature_path = $filename;
-                $user->update(['signature_path' => $filename]);
+                $user->save();
             }
         }
 
@@ -137,5 +140,143 @@ class SuperadminController extends Controller
         ]);
 
         return $pdf->stream('surat_tugas.pdf');
+    }
+    
+    /**
+     * Menampilkan halaman manajemen kategori dan cabang
+     */
+    public function manageData()
+    {
+        $items = Item::orderBy('name')->get();
+        $locations = Location::orderBy('name')->get();
+        
+        return view('superadmin.manage-data', compact('items', 'locations'));
+    }
+    
+    /**
+     * Menampilkan halaman manajemen kategori
+     */
+    public function manageCategories()
+    {
+        $items = Item::orderBy('name')->get();
+        
+        return view('superadmin.manage-categories', compact('items'));
+    }
+    
+    /**
+     * Menampilkan halaman manajemen cabang
+     */
+    public function manageBranches()
+    {
+        $locations = Location::orderBy('name')->get();
+        
+        return view('superadmin.manage-branches', compact('locations'));
+    }
+    
+    /**
+     * Menyimpan cabang baru
+     */
+    public function storeBranch(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:locations,name',
+            'category' => 'required|in:SJM,Non SJM'
+        ]);
+        
+        Location::create([
+            'name' => $request->name,
+            'category' => $request->category
+        ]);
+        
+        return redirect()->back()->with('success', 'Cabang berhasil ditambahkan!');
+    }
+    
+    /**
+     * Menyimpan kategori baru
+     */
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:items,name'
+        ]);
+        
+        Item::create([
+            'name' => $request->name
+        ]);
+        
+        return redirect()->back()->with('success', 'Kategori berhasil ditambahkan!');
+    }
+    
+    /**
+     * Menyimpan cabang baru
+     */
+    
+    
+    /**
+     * Menghapus kategori
+     */
+    public function deleteCategory($id)
+    {
+        $item = Item::findOrFail($id);
+        
+        // Cek apakah kategori masih digunakan dalam laporan
+        if ($item->reports()->count() > 0) {
+            return redirect()->back()->with('error', 'Kategori tidak dapat dihapus karena masih digunakan dalam laporan!');
+        }
+        
+        $item->delete();
+        return redirect()->back()->with('success', 'Kategori berhasil dihapus!');
+    }
+    
+    /**
+     * Mengupdate kategori
+     */
+    public function updateCategory(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:items,name,' . $id
+        ]);
+        
+        $item = Item::findOrFail($id);
+        $item->update([
+            'name' => $request->name
+        ]);
+        
+        return redirect()->back()->with('success', 'Kategori berhasil diperbarui!');
+    }
+    
+    /**
+     * Mengupdate cabang
+     */
+    public function updateBranch(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:locations,name,' . $id,
+            'category' => 'required|in:SJM,Non SJM'
+        ]);
+        
+        $location = Location::findOrFail($id);
+        $location->update([
+            'name' => $request->name,
+            'category' => $request->category
+        ]);
+        
+        return redirect()->back()->with('success', 'Cabang berhasil diperbarui!');
+    }
+    
+    /**
+     * Menghapus cabang
+     */
+    public function deleteBranch($id)
+    {
+        $location = Location::findOrFail($id);
+        
+        // Cek apakah cabang masih digunakan dalam laporan
+        if ($location->reports()->count() > 0) {
+            return redirect()->back()->with('error', 'Cabang tidak dapat dihapus karena masih digunakan dalam laporan!');
+        }
+        
+        $location->delete();
+        return redirect()->back()->with('success', 'Cabang berhasil dihapus!');
     }
 }

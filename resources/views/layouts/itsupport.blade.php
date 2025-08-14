@@ -28,7 +28,7 @@
         <hr class="sidebar-divider my-0">
 
         <li class="nav-item">
-            <a class="nav-link" href="{{ route('dashboard') }}">
+            <a class="nav-link" href="{{ route('chart.itsupport') }}">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span></a>
         </li>
@@ -48,13 +48,6 @@
             <a class="nav-link" href="{{ route('it.reports') }}">
                 <i class="fas fa-clipboard-list"></i>
                 <span>Daftar Laporan</span>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('chart.itsupport') }}">
-                <i class="fas fa-chart-bar"></i>
-                <span>Chart Analisis</span>
             </a>
         </li>
 
@@ -136,10 +129,10 @@
             <div class="modal-body">Pilih "Logout" di bawah jika Anda siap untuk mengakhiri sesi Anda saat ini.</div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" type="button" data-dismiss="modal">Batal</button>
-                <!-- <form action="{{ route('logout') }}" method="POST">
+                <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                     @csrf
                     <button type="submit" class="btn btn-primary">Logout</button>
-                </form> -->
+                </form>
             </div>
         </div>
     </div>

@@ -172,6 +172,8 @@ class Report extends Model
                 return '<span class="badge bg-info text-white"><i class="fas fa-cog"></i> Dikerjakan</span>';
             case 'completed':
                 return '<span class="badge bg-success"><i class="fas fa-check"></i> Selesai</span>';
+            case 'done':
+                return '<span class="badge bg-primary"><i class="fas fa-flag-checkered"></i> Done</span>';
             default:
                 return '<span class="badge bg-secondary">' . ucfirst($this->status) . '</span>';
         }
@@ -187,5 +189,11 @@ class Report extends Model
     public function getFormattedSuratJalanDateAttribute()
     {
         return $this->surat_jalan_date ? $this->surat_jalan_date->format('d/m/Y') : null;
+    }
+    
+    // Tambahkan method ini di dalam class Report
+    public function inspection()
+    {
+        return $this->hasOne(Inspection::class);
     }
 }

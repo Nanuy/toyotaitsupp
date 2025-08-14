@@ -22,6 +22,8 @@
         </div>
     </div>
 
+    
+
     <!-- Filter & Sort Card -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 bg-gradient-primary">
@@ -58,7 +60,31 @@
                             @endforeach
                         </select>
                     </div>
-                    
+
+                    <!-- Category Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label for="category_filter" class="form-label font-weight-bold">
+                            <i class="fas fa-building mr-1"></i>Filter Kategori Cabang
+                        </label>
+                        <select class="form-control" id="category_filter" name="category_filter">
+                            <option value="">Semua Cabang</option>
+                            <option value="SJM">SJM Only</option>
+                            <option value="Non SJM">Non SJM Only</option>
+                        </select>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label for="category_filter" class="form-label font-weight-bold">
+                            <i class="fas fa-building mr-1"></i>Filter Kategori Cabang
+                        </label>
+                        <select class="form-control" id="category_filter" name="category_filter">
+                            <option value="">Semua Cabang</option>
+                            <option value="SJM">SJM Only</option>
+                            <option value="Non SJM">Non SJM Only</option>
+                        </select>
+                    </div>
+
                     <!-- Item Category Filter -->
                     <div class="col-md-3 mb-3">
                         <label for="item_filter" class="form-label font-weight-bold">
@@ -68,6 +94,19 @@
                             <option value="">Semua Kategori</option>
                             @foreach($items as $item)
                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <!-- IT Support Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label for="it_support_filter" class="form-label font-weight-bold">
+                            <i class="fas fa-user-cog mr-1"></i>Filter IT Support
+                        </label>
+                        <select class="form-control" id="it_support_filter" name="it_support_filter">
+                            <option value="">Semua IT Support</option>
+                            @foreach($itSupports as $it)
+                                <option value="{{ $it->id }}">{{ $it->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -163,6 +202,10 @@
         <p class="mt-2 text-muted">Sedang memuat data...</p>
     </div>
 
+    <!-- Widget Cards per Cabang -->
+    <div class="row" id="cabangWidgets">
+        <!-- Cards akan dimuat via AJAX -->
+    </div>
     <!-- Summary Cards -->
     <div class="row mb-4" id="summary-cards">
         <div class="col-xl-3 col-md-6 mb-4">
@@ -288,6 +331,7 @@
                     <div class="chart-area">
                         <canvas id="performanceChart"></canvas>
                     </div>
+                    <div id="it-support-info" class="mt-3"></div>
                 </div>
             </div>
         </div>
@@ -449,6 +493,85 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+<script>
+$(document).ready(function() {
+    // Load initial widgets
+    loadCabangWidgets();
+    
+    // Handle category filter change
+    $('#category_filter').on('change', function() {
+        loadCabangWidgets();
+        loadChartData(); // Reload chart data as well
+    });
+    
+    function loadCabangWidgets() {
+        const categoryFilter = $('#category_filter').val();
+        const startDate = $('#start_date').val();
+        const endDate = $('#end_date').val();
+        
+        // Calculate period in days
+        let period = 30; // default
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            period = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        }
+        
+        $.ajax({
+            url: '{{ route("chart.widgets") }}',
+            method: 'GET',
+            data: {
+                category_filter: categoryFilter,
+                period: period
+            },
+            success: function(response) {
+                renderCabangWidgets(response.all_locations);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading cabang widgets:', error);
+                $('#cabangWidgets').html('<div class="col-12"><div class="alert alert-danger">Error loading data</div></div>');
+            }
+        });
+    }
+    
+    function renderCabangWidgets(locations) {
+        let html = '';
+        const colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary', 'dark', 'light'];
+        
+        locations.forEach(function(location, index) {
+            const colorClass = colors[index % colors.length];
+            const categoryBadge = location.category === 'SJM' ? 
+                '<span class="badge badge-success badge-sm ml-1">SJM</span>' : 
+                '<span class="badge badge-info badge-sm ml-1">Non SJM</span>';
+            
+            html += `
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
+                    <div class="card border-left-${colorClass} shadow h-100 py-2" style="background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%); color: white;">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                        ${location.name} ${categoryBadge}
+                                    </div>
+                                    <div class="h4 mb-0 font-weight-bold text-white">${location.total}</div>
+                                    <div class="text-xs text-white-50">Record Count</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-building fa-2x text-white-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#cabangWidgets').html(html);
+    }
+});
+</script>
+
+
 <style>
 /* Floating Action Button Styles */
 .fab-container {
@@ -566,6 +689,12 @@
             fetchChartData();
         });
         document.getElementById('chart_type').addEventListener('change', fetchChartData);
+        const itSupportFilterEl = document.getElementById('it_support_filter');
+        if (itSupportFilterEl) {
+            itSupportFilterEl.addEventListener('change', function() {
+                fetchChartData();
+            });
+        }
 
         // Table search and pagination
         document.getElementById('table-search').addEventListener('input', debounce(loadReportsTable, 500));
@@ -585,7 +714,7 @@
         document.getElementById('top-items-title').textContent = title;
     }
 
-    function setQuickFilter(period) {
+    function setQuickFilter(period, evt) {
         const today = new Date();
         const startDateInput = document.getElementById('start_date');
         const endDateInput = document.getElementById('end_date');
@@ -617,8 +746,8 @@
         document.querySelectorAll('.btn-group .btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        if (event && event.target) {
-            event.target.classList.add('active');
+        if (evt && evt.target) {
+            evt.target.classList.add('active');
         }
         
         fetchChartData();
@@ -675,7 +804,7 @@
     }
 
     function loadRecentReports() {
-        fetch('/reports/widgets', {
+        fetch('{{ route("chart.widgets") }}', {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'Accept': 'application/json'
@@ -762,30 +891,102 @@
             type: 'bar',
             data: {
                 labels: data.labels,
-                datasets: [{
-                    label: 'Jumlah Laporan',
-                    data: data.values,
-                    backgroundColor: 'rgba(78, 115, 223, 0.8)',
-                    borderColor: 'rgba(78, 115, 223, 1)',
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: 'Solo',
+                        data: data.soloValues || [],
+                        backgroundColor: 'rgba(28, 200, 138, 0.9)',
+                        borderColor: 'rgba(28, 200, 138, 1)',
+                        borderWidth: 1,
+                        stack: 'combined'
+                    },
+                    {
+                        label: 'Tim',
+                        data: data.teamValues || [],
+                        backgroundColor: 'rgba(78, 115, 223, 0.9)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        borderWidth: 1,
+                        stack: 'combined'
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
+                    legend: { display: true },
+                    tooltip: {
+                        callbacks: {
+                            footer: (items) => {
+                                try {
+                                    const idx = items[0].dataIndex;
+                                    const total = (data.values && data.values[idx]) ? data.values[idx] : ((data.soloValues?.[idx] || 0) + (data.teamValues?.[idx] || 0));
+                                    return `Total: ${total}`;
+                                } catch (e) { return ''; }
+                            }
+                        }
                     }
                 },
                 scales: {
-                    y: { 
-                        beginAtZero: true,
-                        ticks: { precision: 0 }
-                    }
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
                 }
             }
         });
+
+        updateItSupportInfo(data);
+    }
+
+    function updateItSupportInfo(data) {
+        const container = document.getElementById('it-support-info');
+        const selected = document.getElementById('it_support_filter')?.value;
+        if (!container) return;
+        
+        if (!selected || !data || !data.labels || data.labels.length !== 1) {
+            // Tampilkan kolaborasi tim umum jika tidak ada filter IT Support spesifik
+            if (data && data.teamCollaborations && Object.keys(data.teamCollaborations).length > 0) {
+                let collaborationHtml = `
+                    <div class="alert alert-info border" role="alert">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-users mr-2"></i>Kolaborasi Tim Terbanyak
+                        </h6>
+                        <div class="row">`;
+                
+                Object.entries(data.teamCollaborations).forEach(([team, count]) => {
+                    collaborationHtml += `
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                                <span class="font-weight-bold">${team}</span>
+                                <span class="badge badge-primary">${count}x</span>
+                            </div>
+                        </div>`;
+                });
+                
+                collaborationHtml += `
+                        </div>
+                    </div>`;
+                
+                container.innerHTML = collaborationHtml;
+            } else {
+                container.innerHTML = '';
+            }
+            return;
+        }
+        
+        const name = data.labels[0] || 'IT Support';
+        const solo = (data.soloValues && data.soloValues[0]) ? data.soloValues[0] : 0;
+        const team = (data.teamValues && data.teamValues[0]) ? data.teamValues[0] : 0;
+        const total = solo + team;
+        
+        container.innerHTML = `
+            <div class="alert alert-light border d-flex align-items-center" role="alert">
+                <i class="fas fa-user-cog text-primary mr-2"></i>
+                <div>
+                    <strong>${name}</strong><br/>
+                    Total pekerjaan: <strong>${total}</strong> &middot; Solo: <strong>${solo}</strong> &middot; Tim: <strong>${team}</strong>
+                </div>
+            </div>
+        `;
     }
 
     function updateMonthlyChart(data) {
@@ -1155,4 +1356,4 @@
         };
     }
 </script>
-@endpush 
+@endpush

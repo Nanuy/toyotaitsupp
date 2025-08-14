@@ -123,11 +123,17 @@
 <p class="mt-3 mb-0">
     Depok, {{ $tanggalSurat }}<br><br>
 
-    @if ($managerSignature && file_exists(public_path('storage/' . $managerSignature->signature_path)))
-        <img src="{{ public_path('storage/' . $managerSignature->signature_path) }}" style="height: 50px;"><br>
-    @else
-        <br><br> {{-- Jika tidak ada tanda tangan, beri spasi kosong --}}
-    @endif
+    {{-- TTD SUPER ADMIN --}}
+            @php
+                $ttdSuperadmin = $report->signatures->firstWhere('role', 'superadmin');
+            @endphp
+            
+                @if ($ttdSuperadmin && $ttdSuperadmin->signature_path)
+                    <img src="{{ public_path('storage/' . $ttdSuperadmin->signature_path) }}" style="height: 50px;">
+                @else
+                    <em>—</em>
+                @endif
+            <br>
 
     <strong>Andrie Sondakh</strong><br>
     IT Manager
@@ -166,7 +172,6 @@
             @endforeach
             <th>Paraf Pengguna</th>
             <th>Paraf Dept Head</th>
-            <th>Paraf Super Admin</th>
         </thead>
         <tbody>
             {{-- TTD IT SUPPORT --}}
@@ -202,18 +207,6 @@
             <td>
                 @if ($ttdDept && $ttdDept->signature_path)
                     <img src="{{ public_path('storage/' . $ttdDept->signature_path) }}" style="height: 50px;">
-                @else
-                    <em>—</em>
-                @endif
-            </td>
-            
-            {{-- TTD SUPER ADMIN --}}
-            @php
-                $ttdSuperadmin = $report->signatures->firstWhere('role', 'superadmin');
-            @endphp
-            <td>
-                @if ($ttdSuperadmin && $ttdSuperadmin->signature_path)
-                    <img src="{{ public_path('storage/' . $ttdSuperadmin->signature_path) }}" style="height: 50px;">
                 @else
                     <em>—</em>
                 @endif

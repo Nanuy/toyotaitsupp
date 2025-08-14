@@ -5,6 +5,21 @@
 @section('content')
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Dashboard IT Support</h1>
+    
+    <!-- Filter Kategori -->
+    <div class="d-flex align-items-center">
+        <label for="categoryFilter" class="form-label me-2 mb-0">Filter Kategori:</label>
+        <select id="categoryFilter" class="form-select" style="width: auto;">
+            <option value="">Semua Cabang</option>
+            <option value="SJM">SJM Only</option>
+            <option value="Non SJM">Non SJM Only</option>
+        </select>
+    </div>
+</div>
+
+<!-- Widget Cards per Cabang -->
+<div class="row" id="cabangWidgets">
+    <!-- Cards akan dimuat via AJAX -->
 </div>
 
 <div class="row">
@@ -180,3 +195,72 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Load initial widgets
+    loadCabangWidgets();
+    
+    // Handle category filter change
+    $('#categoryFilter').on('change', function() {
+        loadCabangWidgets();
+    });
+    
+    function loadCabangWidgets() {
+        const categoryFilter = $('#categoryFilter').val();
+        
+        $.ajax({
+            url: '{{ route("chart.widgets") }}',
+            method: 'GET',
+            data: {
+                category_filter: categoryFilter,
+                period: 30
+            },
+            success: function(response) {
+                renderCabangWidgets(response.all_locations);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading cabang widgets:', error);
+                $('#cabangWidgets').html('<div class="col-12"><div class="alert alert-danger">Error loading data</div></div>');
+            }
+        });
+    }
+    
+    function renderCabangWidgets(locations) {
+        let html = '';
+        const colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary', 'dark'];
+        
+        locations.forEach(function(location, index) {
+            const colorClass = colors[index % colors.length];
+            const categoryBadge = location.category === 'SJM' ? 
+                '<span class="badge badge-success badge-sm">SJM</span>' : 
+                '<span class="badge badge-info badge-sm">Non SJM</span>';
+            
+            html += `
+                <div class="col-xl-3 col-md-6 col-sm-6 mb-4">
+                    <div class="card border-left-${colorClass} shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-${colorClass} text-uppercase mb-1">
+                                        ${location.name} ${categoryBadge}
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${location.total}</div>
+                                    <div class="text-xs text-muted">Record Count</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-building fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#cabangWidgets').html(html);
+    }
+});
+</script>
+@endpush

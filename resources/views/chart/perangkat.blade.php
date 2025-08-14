@@ -58,7 +58,43 @@
                             @endforeach
                         </select>
                     </div>
-                    
+
+                    <!-- Category Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label for="category_filter" class="form-label font-weight-bold">
+                            <i class="fas fa-building mr-1"></i>Filter Kategori Cabang
+                        </label>
+                        <select class="form-control" id="category_filter" name="category_filter">
+                            <option value="">Semua Cabang</option>
+                            <option value="SJM">SJM Only</option>
+                            <option value="Non SJM">Non SJM Only</option>
+                        </select>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label for="category_filter" class="form-label font-weight-bold">
+                            <i class="fas fa-building mr-1"></i>Filter Kategori Cabang
+                        </label>
+                        <select class="form-control" id="category_filter" name="category_filter">
+                            <option value="">Semua Cabang</option>
+                            <option value="SJM">SJM Only</option>
+                            <option value="Non SJM">Non SJM Only</option>
+                        </select>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label for="category_filter" class="form-label font-weight-bold">
+                            <i class="fas fa-building mr-1"></i>Filter Kategori Cabang
+                        </label>
+                        <select class="form-control" id="category_filter" name="category_filter">
+                            <option value="">Semua Cabang</option>
+                            <option value="SJM">SJM Only</option>
+                            <option value="Non SJM">Non SJM Only</option>
+                        </select>
+                    </div>
+
                     <!-- Item Category Filter -->
                     <div class="col-md-3 mb-3">
                         <label for="item_filter" class="form-label font-weight-bold">
@@ -155,6 +191,10 @@
         </div>
     </div>
 
+    <div class="row" id="cabangWidgets">
+        <!-- Cards akan dimuat via AJAX -->
+    </div>
+
     <!-- Loading Indicator -->
     <div id="loading-indicator" class="text-center mb-4" style="display: none;">
         <div class="spinner-border text-primary" role="status">
@@ -237,10 +277,8 @@
             </div>
         </div>
     </div>
-
-    <!-- Charts Row 1 -->
-    <div class="row">
-        <div class="col-xl-6 col-lg-6">
+<div class="row">
+<div class="col-lg-12">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">
@@ -265,22 +303,48 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-6 col-lg-6">
+</div>
+    <!-- Charts Row 1 -->
+    <div class="row">
+        <!-- Chart Status -->
+        <div class="col-xl-4 col-lg-6 col-md-12">
             <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-tags mr-2"></i>Laporan per Kategori
-                    </h6>
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Status Laporan</h6>
                     <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink-status"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow">
-                            <a class="dropdown-item" href="#" onclick="downloadChart('kategoriChart', 'laporan-kategori')">
-                                <i class="fas fa-download fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Download Chart
-                            </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink-status">
+                            <div class="dropdown-header">Aksi Chart:</div>
+                            <a class="dropdown-item" href="#" onclick="downloadChart('statusChart', 'status-laporan')">Download Chart</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="statusChart" style="height: 320px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart per Kategori -->
+        <div class="col-xl-4 col-lg-12 col-md-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Laporan per Kategori</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink-kategori"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink-kategori">
+                            <div class="dropdown-header">Aksi Chart:</div>
+                            <a class="dropdown-item" href="#" onclick="downloadChart('kategoriChart', 'laporan-kategori')">Download Chart</a>
                         </div>
                     </div>
                 </div>
@@ -292,6 +356,7 @@
             </div>
         </div>
     </div>
+    
     
     <!-- Charts Row 2 -->
     <div class="row">
@@ -507,14 +572,218 @@
 <!-- Libraries for chart download functionality -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Load initial widgets
+    loadCabangWidgets();
+    
+    // Handle category filter change
+    $('#category_filter').on('change', function() {
+        loadCabangWidgets();
+    });
+    
+    // Handle date filter change
+    $('#start_date, #end_date').on('change', function() {
+        loadCabangWidgets();
+    });
+    
+    function loadCabangWidgets() {
+        const categoryFilter = $('#category_filter').val();
+        const startDate = $('#start_date').val();
+        const endDate = $('#end_date').val();
+        
+        $.ajax({
+            url: '{{ route("chart.widgets") }}',
+            method: 'GET',
+            data: {
+                category_filter: categoryFilter,
+                start_date: startDate,
+                end_date: endDate,
+                period: 30
+            },
+            success: function(response) {
+                renderCabangWidgets(response.all_locations);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading cabang widgets:', error);
+                $('#cabangWidgets').html('<div class="col-12"><div class="alert alert-danger">Error loading data</div></div>');
+            }
+        });
+    }
+    
+    function renderCabangWidgets(locations) {
+        let html = '';
+        const colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary', 'dark', 'light'];
+        
+        locations.forEach(function(location, index) {
+            const colorClass = colors[index % colors.length];
+            const categoryBadge = location.category === 'SJM' ? 
+                '<span class="badge badge-success badge-sm">SJM</span>' : 
+                '<span class="badge badge-info badge-sm">Non SJM</span>';
+            
+            html += `
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
+                    <div class="card border-left-${colorClass} shadow h-100 py-2" style="background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%); color: white;">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-white text-uppercase mb-1">
+                                        ${location.name} ${categoryBadge}
+                                    </div>
+                                    <div class="h4 mb-0 font-weight-bold text-white">${location.total}</div>
+                                    <div class="text-xs text-white-50">Record Count</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-building fa-2x text-white-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#cabangWidgets').html(html);
+    }
+    
+
+});
+</script>
 
 <style>
-/* Floating Action Button Styles */
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 10px;
+    }
+    
+    .h3 {
+        font-size: 1.5rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 5px;
+        border-radius: 0.25rem !important;
+    }
+    
+    .card-header .btn-group {
+        flex-direction: row;
+        width: auto;
+    }
+    
+    .card-header .btn-group .btn {
+        margin-bottom: 0;
+    }
+    
+    /* Filter form responsive */
+    .col-md-3 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Chart containers */
+    .chart-area {
+        height: 250px !important;
+        margin: 10px 0;
+    }
+    
+    .chart-area canvas {
+        max-height: 250px !important;
+    }
+    
+    /* Summary cards */
+    .col-xl-3 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Table responsive */
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .d-flex {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    /* Recent reports widget */
+    #recent-reports {
+        max-height: 200px !important;
+    }
+    
+    /* Pagination */
+    .btn-group[role="group"] {
+        flex-direction: row;
+        width: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid {
+        padding: 5px;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .card-header {
+        padding: 0.5rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem;
+    }
+    
+    .chart-area {
+        height: 200px !important;
+    }
+    
+    .chart-area canvas {
+        max-height: 200px !important;
+    }
+    
+    .h6 {
+        font-size: 0.9rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Hide some elements on very small screens */
+    .text-xs {
+        font-size: 0.7rem;
+    }
+    
+    .fa-2x {
+        font-size: 1.5em !important;
+    }
+}
+
+/* ===== FLOATING ACTION BUTTON ===== */
 .fab-container {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: 20px;
+    right: 20px;
     z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    .fab-container {
+        bottom: 15px;
+        right: 15px;
+    }
 }
 
 .fab-main {
@@ -530,6 +799,13 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     transition: all 0.3s ease;
     position: relative;
+}
+
+@media (max-width: 768px) {
+    .fab-main {
+        width: 48px;
+        height: 48px;
+    }
 }
 
 .fab-main:hover {
@@ -554,6 +830,14 @@
     border: 2px solid #4e73df;
 }
 
+@media (max-width: 768px) {
+    .fab-option {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 8px;
+    }
+}
+
 .fab-option:hover {
     background: #4e73df;
     color: white;
@@ -574,45 +858,304 @@
     transition: opacity 0.3s ease;
 }
 
+@media (max-width: 768px) {
+    .fab-tooltip {
+        right: 50px;
+        font-size: 10px;
+        padding: 6px 8px;
+    }
+}
+
 .fab-option:hover .fab-tooltip {
     opacity: 1;
 }
 
-/* Table improvements */
+/* ===== TABLE IMPROVEMENTS ===== */
 .table th {
     background-color: #f8f9fc;
     border-top: none;
     font-weight: 600;
     font-size: 0.875rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+@media (max-width: 768px) {
+    .table th {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .table td {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.25rem;
+    }
 }
 
 .table-responsive {
     border-radius: 0.35rem;
+    max-height: 500px;
+    overflow-y: auto;
 }
 
-/* Loading states */
+@media (max-width: 768px) {
+    .table-responsive {
+        max-height: 300px;
+        font-size: 0.7rem;
+    }
+}
+
+/* ===== LOADING STATES ===== */
 .loading-row {
     text-align: center;
     padding: 20px;
     color: #858796;
 }
 
-/* Status badges */
+@media (max-width: 768px) {
+    .loading-row {
+        padding: 15px;
+        font-size: 0.8rem;
+    }
+}
+
+/* ===== STATUS BADGES ===== */
 .status-badge {
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 600;
+    display: inline-block;
+    text-align: center;
+    min-width: 70px;
 }
 
-.status-pending { background-color: #fef3cd; color: #856404; }
-.status-in-progress { background-color: #cff4fc; color: #055160; }
-.status-completed { background-color: #d1e7dd; color: #0f5132; }
-.status-cancelled { background-color: #f8d7da; color: #721c24; }
+@media (max-width: 768px) {
+    .status-badge {
+        padding: 3px 8px;
+        font-size: 0.65rem;
+        min-width: 60px;
+    }
+}
+
+.status-pending { 
+    background-color: #fef3cd; 
+    color: #856404; 
+}
+
+.status-waiting { 
+    background-color: #fff3cd; 
+    color: #856404; 
+}
+
+.status-in-progress { 
+    background-color: #cff4fc; 
+    color: #055160; 
+}
+
+.status-accepted { 
+    background-color: #d1ecf1; 
+    color: #0c5460; 
+}
+
+.status-completed { 
+    background-color: #d1e7dd; 
+    color: #0f5132; 
+}
+
+.status-cancelled { 
+    background-color: #f8d7da; 
+    color: #721c24; 
+}
+
+/* ===== CHART SPECIFIC STYLES ===== */
+.chart-area {
+    position: relative;
+    height: 320px;
+    width: 100%;
+}
+
+@media (max-width: 992px) {
+    .chart-area {
+        height: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-area {
+        height: 250px;
+    }
+}
+
+@media (max-width: 576px) {
+    .chart-area {
+        height: 200px;
+    }
+}
+
+/* ===== CARD IMPROVEMENTS ===== */
+.card {
+    border: none;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    transition: all 0.3s;
+}
+
+.card:hover {
+    box-shadow: 0 0.25rem 2rem 0 rgba(58, 59, 69, 0.2);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+/* ===== DROPDOWN IMPROVEMENTS ===== */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+@media (max-width: 768px) {
+    .dropdown-menu {
+        font-size: 0.8rem;
+    }
+}
+
+/* ===== FORM IMPROVEMENTS ===== */
+.form-control {
+    border: 1px solid #d1d3e2;
+    border-radius: 0.35rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+@media (max-width: 768px) {
+    .form-control {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* ===== BUTTON IMPROVEMENTS ===== */
+.btn {
+    border-radius: 0.35rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.text-truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+    
+    .show-mobile {
+        display: block !important;
+    }
+    
+    .text-truncate-mobile {
+        max-width: 100px;
+    }
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+@media (max-width: 768px) {
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+/* ===== ANIMATION IMPROVEMENTS ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .fab-container,
+    .btn-group,
+    .dropdown,
+    #filter-form {
+        display: none !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .chart-area {
+        height: 300px !important;
+    }
+}
 </style>
 
+
 <script>
-    let cabangChart, kategoriChart, waktuChart, topItemChart;
+
+    let cabangChart, kategoriChart, waktuChart, topItemChart, statusChart;
     let currentData = {};
     let fabOpen = false;
     let currentPage = 1;
@@ -624,6 +1167,9 @@
         loadRecentReports();
         loadReportsTable();
         startRealTimeUpdates();
+        
+        // Add responsive classes
+        addResponsiveClasses();
 
         document.getElementById('filter-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -651,7 +1197,39 @@
             e.preventDefault();
             loadComparisonData();
         });
+        
+        // Handle window resize
+        window.addEventListener('resize', debounce(handleResize, 250));
     });
+    
+    function addResponsiveClasses() {
+        // Add responsive classes to elements
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            card.classList.add('fade-in');
+        });
+        
+        // Add mobile-specific classes
+        if (window.innerWidth <= 768) {
+            document.body.classList.add('mobile-view');
+        }
+    }
+    
+    function handleResize() {
+        // Redraw charts on resize
+        if (cabangChart) cabangChart.resize();
+        if (kategoriChart) kategoriChart.resize();
+        if (waktuChart) waktuChart.resize();
+        if (topItemChart) topItemChart.resize();
+        if (statusChart) statusChart.resize();
+        
+        // Update mobile classes
+        if (window.innerWidth <= 768) {
+            document.body.classList.add('mobile-view');
+        } else {
+            document.body.classList.remove('mobile-view');
+        }
+    }
 
     function showLoading(show) {
         document.getElementById('loading-indicator').style.display = show ? 'block' : 'none';
@@ -663,7 +1241,7 @@
         document.getElementById('top-items-title').textContent = title;
     }
 
-    function setQuickFilter(period) {
+    function setQuickFilter(period, evt) {
         const today = new Date();
         const startDateInput = document.getElementById('start_date');
         const endDateInput = document.getElementById('end_date');
@@ -695,8 +1273,8 @@
         document.querySelectorAll('.btn-group .btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        if (event && event.target) {
-            event.target.classList.add('active');
+        if (evt && evt.target) {
+            evt.target.classList.add('active');
         }
         
         fetchChartData();
@@ -747,6 +1325,7 @@
             updateKategoriChart(data.kategoriData);
             updateWaktuChart(data.waktuData);
             updateTopItemChart(data.topItemData);
+            updateStatusChart(data.statusData);
             showLoading(false);
         })
         .catch(error => {
@@ -1357,6 +1936,66 @@
 
     function showSuccessMessage(message) {
         console.log('Success: ' + message);
+    }
+
+    
+
+    function updateStatusChart(data) {
+        if (statusChart) statusChart.destroy();
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        
+        // Define colors for each status
+        const statusColors = {
+            'waiting': '#f6c23e',     // Yellow for waiting
+            'accepted': '#36b9cc',    // Blue for accepted  
+            'completed': '#1cc88a'    // Green for completed
+        };
+        
+        const backgroundColors = data.labels.map(label => statusColors[label] || '#858796');
+        
+        statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.labels.map(label => {
+                    // Capitalize first letter for display
+                    return label.charAt(0).toUpperCase() + label.slice(1);
+                }),
+                datasets: [{
+                    data: data.values,
+                    backgroundColor: backgroundColors,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: window.innerWidth <= 768 ? 'bottom' : 'right',
+                        labels: {
+                            padding: window.innerWidth <= 768 ? 10 : 20,
+                            usePointStyle: true,
+                            font: {
+                                size: window.innerWidth <= 768 ? 10 : 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 </script>
 @endpush

@@ -19,6 +19,11 @@ use Illuminate\Support\Facades\Storage;
 
 class ReportPublicController extends Controller
 {
+    public function landing()
+    {
+        return view('report.public-landing');
+    }
+    
     public function create()
     {
         return view('report.public-form', [

@@ -1,4 +1,4 @@
-@extends('master')
+@extends('layouts.itsupport')
 
 @section('title', 'Detail Laporan')
 
@@ -238,144 +238,189 @@ details[open] summary {
                 @endif
 
                 {{-- Add Detail Form --}}
-                @if ($report->status === 'accepted')
-                    <form action="{{ route('report.addDetail', $report->id) }}" method="POST" class="mb-4">
-                        @csrf
-                        <div class="d-flex align-items-center mb-3">
-                            <h6 class="text-primary mb-0 me-2">Tambah Detail Perbaikan</h6>
-                            <i class="fas fa-tools text-primary"></i>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="item_id" class="form-label">Item Rusak <span class="text-danger">*</span></label>
-                                    <select name="item_id" class="form-select" required>
-                                        <option value="">-- Pilih Item --</option>
-                                        @if(isset($items))
-                                            @foreach ($items as $item)
-                                                @php
-                                                    $count = isset($itemCounts) ? ($itemCounts[$item->id] ?? 0) : 0;
-                                                    $label = $item->name . ($count > 0 ? " ({$count}x laporan)" : '');
-                                                @endphp
-                                                <option value="{{ $item->id }}">{{ $label }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                {{-- Kolom kosong untuk keseimbangan layout atau tambahan field lain --}}
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="uraian_masalah" class="form-label">Uraian Masalah <span class="text-danger">*</span></label>
-                            <textarea name="uraian_masalah" class="form-control" rows="3" required 
-                                      placeholder="Jelaskan masalah secara detail...">{{ old('uraian_masalah') }}</textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="tindakan" class="form-label">Tindakan Perbaikan <span class="text-danger">*</span></label>
-                            <textarea name="tindakan" class="form-control" rows="3" required 
-                                      placeholder="Jelaskan tindakan yang dilakukan...">{{ old('tindakan') }}</textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save me-1"></i> Simpan Detail
-                        </button>
-                    </form>
-                @endif
-
-                {{-- Item Management Section --}}
-                @if ($report->status === 'accepted' || $report->status === 'in_progress')
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-list me-2"></i>Manajemen Item dalam Laporan
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            {{-- Current Items List --}}
-                            <div class="mb-4">
-                                <h6 class="text-primary">Item yang Dilaporkan:</h6>
-                                @if($report->details && $report->details->count() > 0)
-                                    <div class="table-responsive">
-                                        <table class="table table-sm table-bordered">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Item</th>
-                                                    <th>Uraian Masalah</th>
-                                                    <th>Tindakan</th>
-                                                    <th>Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($report->details as $detail)
-                                                    <tr>
-                                                        <td>{{ $detail->item->name ?? 'Tidak ada' }}</td>
-                                                        <td>{{ $detail->uraian_masalah }}</td>
-                                                        <td>{{ $detail->tindakan }}</td>
-                                                        <td>
-                                                            <button class="btn btn-sm btn-outline-primary" 
-                                                                    onclick="editItem({{ $detail->id }}, '{{ $detail->item->name ?? '' }}', '{{ $detail->uraian_masalah }}', '{{ $detail->tindakan }}')">
-                                                                <i class="fas fa-edit"></i>
-                                                            </button>
-                                                            @if($report->details->count() > 1)
-                                                                <button class="btn btn-sm btn-outline-danger" 
-                                                                        onclick="removeItem({{ $detail->id }})">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </button>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                @else
-                                    <p class="text-muted">Belum ada item yang dilaporkan.</p>
-                                @endif
-                            </div>
-
-                            {{-- Add New Item Form --}}
-                            <div class="border-top pt-3">
-                                <h6 class="text-success">Tambah Item Baru:</h6>
-                                <form id="addItemForm" class="mt-3">
-                                    @csrf
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="new_item_id" class="form-label">Item Rusak <span class="text-danger">*</span></label>
-                                                <select id="new_item_id" name="item_id" class="form-select" required>
-                                                    <option value="">-- Pilih Item --</option>
-                                                    @if(isset($items))
-                                                        @foreach ($items as $item)
-                                                            <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                                        @endforeach
-                                                    @endif
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="new_uraian_masalah" class="form-label">Uraian Masalah <span class="text-danger">*</span></label>
-                                        <textarea id="new_uraian_masalah" name="uraian_masalah" class="form-control" rows="2" required 
-                                                  placeholder="Jelaskan masalah secara detail..."></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="new_tindakan" class="form-label">Tindakan Perbaikan <span class="text-danger">*</span></label>
-                                        <textarea id="new_tindakan" name="tindakan" class="form-control" rows="2" required 
-                                                  placeholder="Jelaskan tindakan yang dilakukan..."></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        <i class="fas fa-plus me-1"></i> Tambah Item
-                                    </button>
-                                </form>
-                            </div>
+@if ($report->status === 'accepted')
+    <!-- Form Data Pemeriksaan -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Data Pemeriksaan Perangkat IT</h6>
+        </div>
+        <div class="card-body">
+            <form action="{{ route('report.update-inspection', $report->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Merek / Tipe</label>
+                            <input type="text" class="form-control" name="merek_tipe" 
+                                   value="{{ $report->merek_tipe }}" placeholder="Contoh: All BP">
                         </div>
                     </div>
-                @endif
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Dampak Ditimbulkan</label>
+                            <textarea class="form-control" name="dampak_ditimbulkan" rows="2" 
+                                      placeholder="Contoh: Susah absen">{{ $report->dampak_ditimbulkan }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Tindakan Yang Dilakukan</label>
+                            <textarea class="form-control" name="tindakan_dilakukan" rows="3" 
+                                      placeholder="Contoh: Laporan masuk, Pengadaan ms office baru">{{ $report->tindakan_dilakukan }}</textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Rekomendasi Teknis</label>
+                            <textarea class="form-control" name="rekomendasi_teknis" rows="2" 
+                                      placeholder="Contoh: Pembelian Mesin absen baru">{{ $report->rekomendasi_teknis }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Spesifikasi Pengadaan</label>
+                    <input type="text" class="form-control" name="spesifikasi_pengadaan" 
+                           value="{{ $report->spesifikasi_pengadaan }}" placeholder="Contoh: Solution X903">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Simpan Data Pemeriksaan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="fas fa-tools me-2"></i>Tambah Detail Perbaikan
+            </h6>
+        </div>
+        <div class="card-body">
+            {{-- Contoh Tampilan Item dengan Jumlah Laporan --}}
+            <div class="alert alert-info mb-4">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Contoh Tampilan:</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>User: 628xxxxx</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Keyboard (2x laporan)</li>
+                            <li>Mouse (3x laporan)</li>
+                            <li>Monitor (1x laporan)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>User: 629xxxxx</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Printer (4x laporan)</li>
+                            <li>CPU (2x laporan)</li>
+                            <li>Speaker (1x laporan)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <form action="{{ route('report.addDetail', $report->id) }}" method="POST">
+                @csrf
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="item_id" class="form-label">Item Rusak <span class="text-danger">*</span></label>
+                            <select name="item_id" class="form-select" required>
+                                <option value="">-- Pilih Item --</option>
+                                @if(isset($items))
+                                    @foreach ($items as $item)
+                                        @php
+                                            $count = isset($itemCounts) ? ($itemCounts[$item->id] ?? 0) : 0;
+                                            $label = $item->name . ($count > 0 ? " ({$count}x laporan)" : '');
+                                        @endphp
+                                        <option value="{{ $item->id }}">{{ $label }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <small class="text-muted">Angka dalam kurung menunjukkan jumlah laporan untuk item tersebut</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {{-- Kolom untuk informasi tambahan atau field lain jika diperlukan --}}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="uraian_masalah" class="form-label">Uraian Masalah <span class="text-danger">*</span></label>
+                    <textarea name="uraian_masalah" class="form-control" rows="3" required 
+                              placeholder="Contoh: Keyboard tidak berfungsi pada tombol spasi dan enter, kemungkinan kerusakan pada switch keyboard">{{ old('uraian_masalah') }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tindakan" class="form-label">Tindakan Perbaikan <span class="text-danger">*</span></label>
+                    <textarea name="tindakan" class="form-control" rows="3" required 
+                              placeholder="Contoh: Membersihkan keyboard, mengganti switch yang rusak, testing fungsi semua tombol">{{ old('tindakan') }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-1"></i> Simpan Detail
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {{-- Item Management Section - Daftar Item yang Sudah Ditambahkan --}}
+    @if($report->details && $report->details->count() > 0)
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Item yang Sudah Dilaporkan ({{ $report->details->count() }} item)
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="20%">Item</th>
+                                <th width="35%">Uraian Masalah</th>
+                                <th width="35%">Tindakan</th>
+                                <th width="10%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($report->details as $detail)
+                                <tr>
+                                    <td><strong>{{ $detail->item->name ?? 'Tidak ada' }}</strong></td>
+                                    <td>{{ $detail->uraian_masalah }}</td>
+                                    <td>{{ $detail->tindakan }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="editItem({{ $detail->id }}, @json($detail->item->name ?? ''), @json($detail->uraian_masalah), @json($detail->tindakan))"
+                                                    title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            @if($report->details->count() > 1)
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        onclick="removeItem({{ $detail->id }})"
+                                                        title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+@endif       
 
                 {{-- Date Input Form --}}
                 @if ($report->status === 'accepted')
@@ -434,14 +479,23 @@ details[open] summary {
 
                 {{-- Print PDF Button --}}
                 <div class="d-flex gap-2 flex-wrap">
-                    @if ($report->status === 'accepted')
-                        <a href="{{ route('report.surat', $report->id) }}" class="btn btn-outline-primary" target="_blank">
-                            <i class="fas fa-file-pdf me-1"></i> Cetak Surat Tugas
+                    @if ($report->status === 'accepted' && auth()->user()->role === 'it_supp')
+                        <a href="{{ route('report.form-pemeriksaan', $report->id) }}" 
+                           class="btn btn-info me-2">
+                            <i class="fas fa-clipboard-check me-1"></i> Form Pemeriksaan
                         </a>
-                    @else
-                        <button class="btn btn-outline-secondary" disabled title="Laporan harus di-accept terlebih dahulu">
-                            <i class="fas fa-lock me-1"></i> Cetak Surat
-                        </button>
+                        
+                        <a href="{{ route('report.surat', $report->id) }}" 
+                           class="btn btn-primary me-2" target="_blank">
+                            <i class="fas fa-print me-1"></i> Cetak Surat Tugas
+                        </a>
+                        
+                        @if($report->merek_tipe && $report->dampak_ditimbulkan && $report->tindakan_dilakukan && $report->rekomendasi_teknis && $report->spesifikasi_pengadaan)
+                            <a href="{{ route('report.surat-pemeriksaan', $report->id) }}" 
+                               class="btn btn-success" target="_blank">
+                                <i class="fas fa-file-pdf me-1"></i> Surat Pemeriksaan PDF
+                            </a>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -523,12 +577,14 @@ details[open] summary {
 </div>
 @endif
 
-    <!-- {{-- Debug Info untuk Tombol Tanda Tangan --}}
+    {{-- Check if current user is assigned to this report --}}
     @php
         $isAssigned = $report->itSupports->contains(function ($it) {
             return $it->id === auth()->id();
         });
     @endphp
+
+    <!-- {{-- Debug Info untuk Tombol Tanda Tangan --}}
 
     @if(auth()->check())
         <div class="alert alert-warning">
@@ -642,6 +698,33 @@ details[open] summary {
                         <p class="text-muted small mt-2">
                             Ditandatangani pada: {{ $userSignature->signed_at ? $userSignature->signed_at->format('d/m/Y H:i') : $userSignature->created_at->format('d/m/Y H:i') }}
                         </p>
+                    </div>
+                @endif
+                
+                {{-- Tombol Done --}}
+                @if($report->status !== 'done')
+                    <div class="text-center mt-4">
+                        <hr>
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-flag-checkered me-2"></i>
+                            Selesaikan Laporan
+                        </h6>
+                        <p class="text-muted small mb-3">
+                            Klik tombol di bawah untuk menandai laporan sebagai <strong>SELESAI</strong> dan menambahkan tanda tangan Head Dept.
+                        </p>
+                        <form action="{{ route('it.reports.done', $report->id) }}" method="POST" 
+                              onsubmit="return confirm('Yakin ingin menandai laporan ini sebagai SELESAI? Tanda tangan Head Dept akan ditambahkan secara otomatis.')">
+                            @csrf
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-flag-checkered me-2"></i>
+                                DONE
+                            </button>
+                        </form>
+                    </div>
+                @else
+                    <div class="alert alert-info text-center mt-4">
+                        <i class="fas fa-flag-checkered me-2"></i>
+                        <strong>Laporan telah ditandai sebagai SELESAI</strong>
                     </div>
                 @endif
             </div>
@@ -853,7 +936,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(this);
-            const reportId = {{ $report->id }};
+            const reportId = {!! json_encode($report->id) !!};
             
             fetch(`/report/${reportId}/items`, {
                 method: 'POST',
@@ -934,6 +1017,15 @@ function editItem(detailId, itemName, uraian, tindakan) {
     document.getElementById('edit_uraian_masalah').value = uraian;
     document.getElementById('edit_tindakan').value = tindakan;
     
+    // Set the selected item in dropdown (need to find the correct option)
+    const itemSelect = document.getElementById('edit_item_id');
+    for (let option of itemSelect.options) {
+        if (option.text === itemName) {
+            option.selected = true;
+            break;
+        }
+    }
+    
     // Show modal
     const bsModal = new bootstrap.Modal(modal);
     bsModal.show();
@@ -948,7 +1040,7 @@ function saveEditItem(detailId) {
     const itemId = document.getElementById('edit_item_id').value;
     const uraian = document.getElementById('edit_uraian_masalah').value;
     const tindakan = document.getElementById('edit_tindakan').value;
-    const reportId = {{ $report->id }};
+    const reportId = {!! json_encode($report->id) !!};
     
     if (!itemId || !uraian || !tindakan) {
         alert('Semua field harus diisi!');
@@ -988,7 +1080,7 @@ function removeItem(detailId) {
         return;
     }
     
-    const reportId = {{ $report->id }};
+    const reportId = {{ $report->id ?? 'null' }};
     
     fetch(`/report/${reportId}/items/${detailId}`, {
         method: 'DELETE',
@@ -1011,6 +1103,7 @@ function removeItem(detailId) {
         alert('Terjadi kesalahan saat menghapus item.');
     });
 
+}
 </script>
 
 @endsection
